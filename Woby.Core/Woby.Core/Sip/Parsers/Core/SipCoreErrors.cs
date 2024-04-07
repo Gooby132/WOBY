@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FluentResults;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,7 +22,6 @@ namespace Woby.Core.Sip.Parsers.Core
         public static InvalidError CSeqSequenceIsTooLarge() => new InvalidError(GroupCode, 8, "'CSeq' sequence exceeds the limit");
         public static InvalidError CSeqCouldNotBeParsed() => new InvalidError(GroupCode, 9, "'CSeq' could not be parsed");
         public static InvalidError MaxForwardCouldNotBeParsed() => new InvalidError(GroupCode, 10, "'Max-Forward' could not be parsed");
-
-
+        public static InvalidError GeneralInvalidMessageError(string message) => new InvalidError(GroupCode, 11, $"General invalid error - '{message}'");
     }
 }
