@@ -61,92 +61,36 @@ namespace Woby.Core.Sip.Parsers.Core
 
         public Result<IEnumerable<HeaderBase>> Parse(string headerInUtf)
         {
-            StringReader reader = new StringReader(headerInUtf);
-            List<Tuple<string,string>> headers = new();
-
-            int character = -1;
+            StringReader reader = new StringReader(headerInUtf.Trim());
             string key = string.Empty;
 
-            // while till end of message
-            while ((character = reader.Read()) != -1)
+            var parsedHeadersAsStrings = ParseFoldingHeaders(reader);
+
+            if (parsedHeadersAsStrings.IsFailed)
             {
+                _logger.LogWarning("{this} failed to parse headers section to folding headers. error(s) - '{errors}'", 
+                    this, string.Join(", ", parsedHeadersAsStrings.Reasons.Select(r => r.Message)));
 
-                if (!char.IsAscii((char)character)) // TODO : remove this should be seperated by /r/n/r/n
-                {
-                    // invalid sip message - character is not ascii
+                return Result.Fail(parsedHeadersAsStrings.Errors);
+            }
 
-                    return Result.Fail(SipCoreErrors.GeneralInvalidMessageError("Message contains a non ascii character"));
-                }
+            var headersAsKeyValue = ParseHeadersStringsAsKeyValue(parsedHeadersAsStrings.Value);
 
-                string body = string.Empty;
+            if(headersAsKeyValue.IsFailed)
+            {
+                _logger.LogWarning("{this} failed to parse headers section to key value headers. error(s) - '{errors}'",
+                    this, string.Join(", ", parsedHeadersAsStrings.Reasons.Select(r => r.Message)));
 
-                StringBuilder builder = new StringBuilder();
-                builder.Append((char)character);
-
-                // while till Key ; Value parse
-                while ((character = reader.Read()) != -1)
-                {
-
-                    if (!char.IsAscii((char)character))
-                    {
-                        // invalid sip message - character is not ascii
-
-                        return Result.Fail(SipCoreErrors.GeneralInvalidMessageError("Message contains a non ascii character"));
-                    }
-
-                    if (character == ':')
-                    {
-                        key = builder.ToString();
-                        break; // key found
-                    }
-
-                    // parse header body
-
-                    if (character != '\r')
-                    {
-                        builder.Append((char)character);
-                        continue;
-                    }
-
-                    // start of carrier return statement
-                    character = reader.Read();
-
-                    if (!char.IsAscii((char)character))
-                    {
-                        // invalid sip message - character is not ascii
-
-                        return Result.Fail(SipCoreErrors.GeneralInvalidMessageError("Message contains a non ascii character"));
-                    }
-
-                    if (character != '\n')
-                    {
-                        builder.Append((char)character);
-                        continue;
-                    }
-
-                    builder.Append((char)character); // character appended is '\n'
-
-                    // folding message can continue to be read till crlf with no whitespace after
-                    if (char.IsWhiteSpace((char)reader.Peek()))
-                        continue;
-
-                    _logger.LogTrace("{this} header parsed key - '{header}' value - '{value}'", this, key, body);
-
-                    // header did finish with folding mechanisem adding full header to list
-                    headers.Add(new(key, builder.ToString()));
-
-                    break;
-                }
-
+                return Result.Fail(headersAsKeyValue.Errors);
             }
 
             reader.Dispose();
 
-            _logger.LogTrace("{this} objs - '{val}'", this, string.Join(Environment.NewLine, headers.Select(kv => $"{kv.Item1} - value {kv.Item2}")));
+            _logger.LogTrace("{this} objs - '{val}'", this, string.Join(Environment.NewLine, headersAsKeyValue.Value.Select(kv => $"{kv.Item1} - value {kv.Item2}")));
 
             List<HeaderBase> parsedHeaders = new List<HeaderBase>();
 
-            foreach (var header in headers)
+            foreach (var header in headersAsKeyValue.Value)
             {
                 if (_sipRouteHeaderParser.TryParse(header.Item1, header.Item2, out var parsed))
                     parsedHeaders.Add(parsed);
@@ -154,6 +98,52 @@ namespace Woby.Core.Sip.Parsers.Core
             }
 
             return parsedHeaders;
+        }
+
+        private Result<IEnumerable<(string, string)>> ParseHeadersStringsAsKeyValue(IEnumerable<string> headersAsStrings)
+        {
+            List<(string, string)> keyValueHeaders = new();
+
+            foreach (var header in headersAsStrings) 
+            { 
+                var sections = header.Split(":", 2, StringSplitOptions.None);
+
+                if(sections.Length != 2)
+                    return Result.Fail(SipCoreErrors.GeneralInvalidMessageError("Header does not contains a ':' seperator"));
+
+                keyValueHeaders.Add(new(sections[0].Trim(), sections[1].Trim()));
+            }
+
+            return keyValueHeaders;
+        }
+
+        private Result<IEnumerable<string>> ParseFoldingHeaders(StringReader reader)
+        {
+            List<string> headers = new();
+            StringBuilder headerBuilder = new StringBuilder();
+
+            int character;
+            while ((character = reader.Read()) != -1)
+            {
+
+                if(!char.IsAscii((char)character))
+                    return Result.Fail(SipCoreErrors.GeneralInvalidMessageError("Message contains a non ascii character"));
+
+                headerBuilder.Append((char)character);
+
+                if (character == '\n')
+                {
+                    // if not whitespace its the end of the header (see folding headers)
+                    if (!char.IsWhiteSpace((char)reader.Peek()))
+                    {
+                        headers.Add(headerBuilder.ToString());
+                        headerBuilder = new StringBuilder();
+                        continue;
+                    }
+                }
+            }
+
+            return Result.Ok<IEnumerable<string>>(headers);
         }
 
     }
