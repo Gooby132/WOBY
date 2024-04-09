@@ -3,7 +3,9 @@ using Microsoft.Extensions.Logging;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using Woby.Core.Core.Headers;
+using Woby.Core.Sip.Parsers.Headers;
 using Woby.Core.Sip.Parsers.RouteHeaderParser;
+using Woby.Core.Sip.Parsers.Utils;
 
 namespace Woby.Core.Sip.Parsers.Core
 {
@@ -61,10 +63,12 @@ namespace Woby.Core.Sip.Parsers.Core
 
         public Result<IEnumerable<HeaderBase>> Parse(string headerInUtf)
         {
+
             StringReader reader = new StringReader(headerInUtf.Trim());
-            string key = string.Empty;
 
             var parsedHeadersAsStrings = ParseFoldingHeaders(reader);
+
+            reader.Dispose();
 
             if (parsedHeadersAsStrings.IsFailed)
             {
@@ -84,22 +88,49 @@ namespace Woby.Core.Sip.Parsers.Core
                 return Result.Fail(headersAsKeyValue.Errors);
             }
 
-            reader.Dispose();
+            var sipHeaders = ParseHeaderParametersAsSipHeaders(headersAsKeyValue.Value);
+
+            if (sipHeaders.IsFailed)
+            {
+                _logger.LogWarning("{this} failed to parse headers to sip headers. error(s) - '{errors}'",
+                    this, string.Join(", ", sipHeaders.Reasons.Select(r => r.Message)));
+
+                return Result.Fail(headersAsKeyValue.Errors);
+            }
 
             _logger.LogTrace("{this} objs - '{val}'", this, string.Join(Environment.NewLine, headersAsKeyValue.Value.Select(kv => $"{kv.Item1} - value {kv.Item2}")));
 
             List<HeaderBase> parsedHeaders = new List<HeaderBase>();
 
-            foreach (var header in headersAsKeyValue.Value)
+            foreach (var header in sipHeaders.Value)
             {
-                if (_sipRouteHeaderParser.TryParse(header.Item1, header.Item2, out var parsed))
+                if (_sipRouteHeaderParser.TryParse(header, out var parsed))
                     parsedHeaders.Add(parsed);
-                else parsedHeaders.Add(new UnknownHeader(header.Item1, header.Item2));
+                else parsedHeaders.Add(new UnknownHeader(header.Key, header.Body));
             }
 
             return parsedHeaders;
         }
 
+        private Result<IEnumerable<SipHeader>> ParseHeaderParametersAsSipHeaders(IEnumerable<(string, string)> keyValueHeaders)
+        {
+            var sipHeaders = new List<SipHeader>();
+
+            foreach (var keyValueHeader in keyValueHeaders)
+            {
+                if (!HeaderFieldsUtils.TryParseHeaderParameters(keyValueHeader.Item2, out var headerValue, out var parameters))
+                {
+                    _logger.LogWarning("{this} failed parsing header parameters for header name - '{name}' with value - {value}",
+                        this, keyValueHeader.Item1, keyValueHeader.Item2);
+
+                    continue;
+                }
+
+                sipHeaders.Add(new (keyValueHeader.Item1, headerValue, HeaderTypes.Unknown, parameters));
+            }
+
+            return sipHeaders;
+        }
         private Result<IEnumerable<(string, string)>> ParseHeadersStringsAsKeyValue(IEnumerable<string> headersAsStrings)
         {
             List<(string, string)> keyValueHeaders = new();
@@ -145,6 +176,7 @@ namespace Woby.Core.Sip.Parsers.Core
 
             return Result.Ok<IEnumerable<string>>(headers);
         }
+
 
     }
 }

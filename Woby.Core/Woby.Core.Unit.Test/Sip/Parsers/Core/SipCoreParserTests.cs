@@ -10,8 +10,7 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.Core
     public class SipCoreParserTests
     {
 
-        public const string SimpleInviteHeaderSection = @"
-Via: SIP/2.0/UDP 192.168.10.10:5060;branch=z9hG4bK776asdhds
+        public const string SimpleInviteHeaderSection = @"Via: SIP/2.0/UDP 192.168.10.10:5060;branch=z9hG4bK776asdhds
 Max-Forwards: 70
 To: ""Bob"" <sip:+14155552222@example.pstn.twilio.com>
 From: ""Alice"" <sip:+14155551111@example.pstn.twilio.com>;tag=1
