@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using Microsoft.Extensions.Logging;
+using System.Diagnostics.CodeAnalysis;
 using Woby.Core.Core.Headers;
 using Woby.Core.Sip.Headers;
 using Woby.Core.Sip.Messages;
@@ -22,6 +23,12 @@ namespace Woby.Core.Sip.Parsers.SpecializedHeaderParsers
     {
 
         public static readonly char[] Whitespaces = [' ', '\t', '\n', '\r'];
+        private readonly ILogger<SipRouteHeaderParser> _logger;
+
+        public SipRouteHeaderParser(ILogger<SipRouteHeaderParser> logger)
+        {
+            _logger = logger;
+        }
 
         public bool TryParse(SipHeader header, [NotNullWhen(true)] out Route? route)
         {

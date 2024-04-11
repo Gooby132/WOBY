@@ -146,27 +146,27 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.Core
             var header4 = parser.ParseSingleHeader(test4);
             var header5 = parser.ParseSingleHeader(test5);
 
-            SipHeader expectedHeader1 = new SipHeader("To", "SIP/2.0/UDP 192.0.2.1:5060", HeaderType.Unknown, new List<SipParameter>
+            SipHeader expectedHeader1 = new SipHeader("Via", "SIP/2.0/UDP 192.0.2.1:5060", HeaderType.Unknown, new List<SipParameter>
             {
                 new SipParameter("branch", "z9hG4bK874h87")
             });
 
-            SipHeader expectedHeader2 = new SipHeader("To", "SIP/2.0/UDP 198.51.100.1:5060", HeaderType.Unknown, new List<SipParameter>
+            SipHeader expectedHeader2 = new SipHeader("Via", "SIP/2.0/UDP 198.51.100.1:5060", HeaderType.Unknown, new List<SipParameter>
             {
                 new SipParameter("branch", "z9hG4bKaa76d")
             });
 
-            SipHeader expectedHeader3 = new SipHeader("To", "SIP/2.0/UDP 203.0.113.1:5060", HeaderType.Unknown, new List<SipParameter>
+            SipHeader expectedHeader3 = new SipHeader("Via", "SIP/2.0/UDP 203.0.113.1:5060", HeaderType.Unknown, new List<SipParameter>
             {
                 new SipParameter("branch", "z9hG4bKabcd34")
             });
 
-            SipHeader expectedHeader4 = new SipHeader("To", "SIP/2.0/TCP 192.0.2.50:5060", HeaderType.Unknown, new List<SipParameter>
+            SipHeader expectedHeader4 = new SipHeader("Via", "SIP/2.0/TCP 192.0.2.50:5060", HeaderType.Unknown, new List<SipParameter>
             {
                 new SipParameter("branch", "z9hG4bKkjiu32")
             });
 
-            SipHeader expectedHeader5 = new SipHeader("To", "SIP/2.0/TLS 198.51.100.20:5061", HeaderType.Unknown, new List<SipParameter>
+            SipHeader expectedHeader5 = new SipHeader("Via", "SIP/2.0/TLS 198.51.100.20:5061", HeaderType.Unknown, new List<SipParameter>
             {
                 new SipParameter("branch", "z9hG4bKqwert1")
             });
@@ -183,6 +183,8 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.Core
             Assert.IsTrue(expectedHeader4 == header4.Value);
             Assert.IsTrue(expectedHeader5 == header5.Value);
         }
+
+        // TODO : add all variations of common sip headers
 
     }
 }

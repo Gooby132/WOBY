@@ -18,5 +18,21 @@
 
         public static bool operator !=(SipParameter x, SipParameter y) => !(x == y);
 
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (ReferenceEquals(obj, null))
+            {
+                return false;
+            }
+
+            return obj is SipParameter && this == (SipParameter)obj;
+        }
+
+        public override int GetHashCode() => Name.GetHashCode() ^ Value.GetHashCode();
     }
 }

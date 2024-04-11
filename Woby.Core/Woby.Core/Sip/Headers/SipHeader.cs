@@ -29,15 +29,30 @@ namespace Woby.Core.Sip.Headers
             if (left.Parameters is null && right.Parameters is not null)
                 return false;
 
-            if (left.Parameters.Count() != right.Parameters.Count()) 
+            if (left!.Parameters!.Count() != right!.Parameters!.Count()) 
                 return false;
 
-            return !left.Parameters.Any(lp => right.Parameters.FirstOrDefault(rp => rp == lp) is null);
+            return !left!.Parameters!.Any(lp => right!.Parameters!.FirstOrDefault(rp => rp == lp) is null);
 
         }
 
         public static bool operator !=(SipHeader left, SipHeader right) => !(left == right);
 
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
 
+            if (ReferenceEquals(obj, null))
+            {
+                return false;
+            }
+
+            return obj is SipHeader && this == (SipHeader)obj;
+        }
+
+        public override int GetHashCode() => Key.GetHashCode() ^ Body.GetHashCode();
     }
 }

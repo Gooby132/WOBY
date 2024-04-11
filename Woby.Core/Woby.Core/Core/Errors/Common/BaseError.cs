@@ -6,13 +6,11 @@ namespace Woby.Core.Core.Errors.Common
     {
         public int GroupCode { get; init; }
         public int ErrorCode { get; init; }
-        public string Message { get; init; }
 
-        protected BaseError(int groupCode, int errorCode, string message)
+        protected BaseError(int groupCode, int errorCode, string message) : base(message)
         {
             GroupCode = groupCode;
             ErrorCode = errorCode;
-            Message = message;
         }
     }
 }

@@ -1,10 +1,27 @@
-﻿using Woby.Core.Sip.Parsers.SpecializedHeaderParsers;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using Woby.Core.Sip.Parsers.Core;
+using Woby.Core.Sip.Parsers.SpecializedHeaderParsers;
 
 namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
 {
     [TestClass]
     public class SipRouteHeaderParserTest
     {
+
+        private ServiceProvider _provider;
+
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            ServiceCollection services = new ServiceCollection();
+
+            services.AddLogging(conf => conf.AddSerilog());
+            services.AddTransient<SipHeaderParser>();
+            services.AddTransient<SipHeaderParser>();
+
+            _provider = services.BuildServiceProvider();
+        }
 
         [TestMethod]
         public void ParseSimpleHeader_Successful()
