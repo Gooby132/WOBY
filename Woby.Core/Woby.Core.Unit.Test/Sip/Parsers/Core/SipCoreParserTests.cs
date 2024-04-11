@@ -26,8 +26,8 @@ CSeq: 1 INVITE
 
             collection.AddLogging(conf => conf.AddSerilog());
             collection.AddTransient<SipCoreParser>();
-            collection.AddTransient<SipHeaderParser>();
-            collection.AddTransient<SipRouteHeaderParser>();
+            collection.AddTransient<SipCoreHeaderParser>();
+            collection.AddTransient<SipSpecializedHeaderParser>();
 
             _provider = collection.BuildServiceProvider();
         }
@@ -35,7 +35,7 @@ CSeq: 1 INVITE
         [TestMethod]
         public void Validate_InsureAllMustHeadersArePresent_Successful()
         {
-            var parser = _provider.GetService<SipCoreParser>();
+            var parser = _provider.GetRequiredService<SipCoreParser>();
 
             var message = parser.Parse(SimpleInviteHeaderSection, NetworkProtocols.Tcp);
 
@@ -45,7 +45,6 @@ CSeq: 1 INVITE
             Assert.IsNotNull(string.IsNullOrEmpty(message.Value.CSeq));
             Assert.AreEqual(message.Value.MaxForward, 70);
             Assert.IsNotNull(string.IsNullOrEmpty(message.Value.Via));
-
         }
 
     }

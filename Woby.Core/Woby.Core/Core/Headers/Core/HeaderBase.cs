@@ -1,4 +1,4 @@
-﻿namespace Woby.Core.Core.Headers
+﻿namespace Woby.Core.Core.Headers.Core
 {
     public abstract class HeaderBase
     {

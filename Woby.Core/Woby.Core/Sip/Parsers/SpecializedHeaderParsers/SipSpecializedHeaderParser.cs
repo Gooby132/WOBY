@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
-using Woby.Core.Core.Headers;
+using Woby.Core.Core.Headers.Core;
+using Woby.Core.Core.Headers.Routings;
 using Woby.Core.Sip.Headers;
 using Woby.Core.Sip.Messages;
 using static Woby.Core.Utils.Rfc.SyntaxHelper;
@@ -19,13 +20,13 @@ namespace Woby.Core.Sip.Parsers.SpecializedHeaderParsers
     /// These rules for parsing a display name, URI and URI parameters, and header parameters also apply for the header fields To and From.
     /// 
     /// </summary>
-    public class SipRouteHeaderParser
+    public class SipSpecializedHeaderParser
     {
 
         public static readonly char[] Whitespaces = [' ', '\t', '\n', '\r'];
-        private readonly ILogger<SipRouteHeaderParser> _logger;
+        private readonly ILogger<SipSpecializedHeaderParser> _logger;
 
-        public SipRouteHeaderParser(ILogger<SipRouteHeaderParser> logger)
+        public SipSpecializedHeaderParser(ILogger<SipSpecializedHeaderParser> logger)
         {
             _logger = logger;
         }
@@ -33,9 +34,9 @@ namespace Woby.Core.Sip.Parsers.SpecializedHeaderParsers
         public bool TryParse(SipHeader header, [NotNullWhen(true)] out Route? route)
         {
             HeaderBase? temp = null;
-            var type = SipHeaderTypes.GetType(header.Key);
+            var type = SipHeaderType.GetType(header.Key);
 
-            type.When(SipHeaderTypes.From).Then(() =>
+            type.When([SipHeaderType.From, SipHeaderType.To, SipHeaderType.Contact]).Then(() =>
             {
                 // Address Specification ; https://datatracker.ietf.org/doc/html/rfc2822#section-3.4
                 // using name-addr
@@ -43,29 +44,9 @@ namespace Woby.Core.Sip.Parsers.SpecializedHeaderParsers
                 if (!AddressSpecifications.TryParseNameAddr(header.Body, out var displayName, out var address))
                     return;
 
-                temp = new Route(new Uri(address), RouteIntake.From, displayName, header.Key, header.Body);
-            })
-            .When(SipHeaderTypes.To).Then(() =>
-            {
-                // Address Specification ; https://datatracker.ietf.org/doc/html/rfc2822#section-3.4
-                // using name-addr
-
-                if (!AddressSpecifications.TryParseNameAddr(header.Body, out var displayName, out var address))
-                    return;
-
-                temp = new Route(new Uri(address), RouteIntake.To, displayName, header.Key, header.Body);
-            })
-            .When(SipHeaderTypes.Via).Then(() =>
-             {
-                 // Address Specification ; https://datatracker.ietf.org/doc/html/rfc2822#section-3.4
-                 // using name-addr
-
-                 if (!AddressSpecifications.TryParseNameAddr(header.Body, out var displayName, out var address))
-                     return;
-
-                 temp = new Route(new Uri(address), RouteIntake.Proxy, displayName, header.Key, header.Body);
-             });
-
+                temp = new Route(new Uri(address), displayName, header.Key, header.Body);
+            });
+            
             route = temp as Route;
 
             return route is not null;

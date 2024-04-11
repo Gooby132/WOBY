@@ -1,4 +1,4 @@
-﻿using Woby.Core.Core.Headers;
+﻿using Woby.Core.Core.Headers.Core;
 
 namespace Woby.Core.Sip.Headers
 {

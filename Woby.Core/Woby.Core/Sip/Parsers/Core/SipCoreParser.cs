@@ -14,7 +14,7 @@ namespace Woby.Core.Sip.Parsers.Core
         #region Fields
 
         private readonly ILogger<SipCoreParser> _logger;
-        private readonly SipHeaderParser _sipHeaderParser;
+        private readonly SipCoreHeaderParser _sipHeaderParser;
 
         #endregion
 
@@ -30,7 +30,7 @@ namespace Woby.Core.Sip.Parsers.Core
         #endregion
 
         #region Constructor
-        public SipCoreParser(ILogger<SipCoreParser> logger, SipHeaderParser sipHeaderParser)
+        public SipCoreParser(ILogger<SipCoreParser> logger, SipCoreHeaderParser sipHeaderParser)
         {
             _logger = logger;
             _sipHeaderParser = sipHeaderParser;

@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Text;
-using Woby.Core.Core.Headers;
+using Woby.Core.Core.Headers.Core;
 using Woby.Core.Sip.Headers;
 using Woby.Core.Sip.Parsers.SpecializedHeaderParsers;
 using Woby.Core.Sip.Parsers.Utils;
@@ -39,30 +39,30 @@ namespace Woby.Core.Sip.Parsers.Core
      *     treated in its unfolded form for further syntactic and semantic
      *     evaluation.
      */
-    public class SipHeaderParser
+    public class SipCoreHeaderParser
     {
 
         #region Fields
 
-        private readonly ILogger<SipHeaderParser> _logger;
+        private readonly ILogger<SipCoreHeaderParser> _logger;
 
         #endregion
 
         #region Properties
 
-        public string Name { get; set; } = nameof(SipHeaderParser);
+        public string Name { get; set; } = nameof(SipCoreHeaderParser);
 
         #endregion
 
-        public SipHeaderParser(ILogger<SipHeaderParser> logger) 
+        public SipCoreHeaderParser(ILogger<SipCoreHeaderParser> logger) 
         {
             _logger = logger;
         }
 
-        public Result<IEnumerable<Result<SipHeader>>> Parse(string headerInUtf)
+        public Result<IEnumerable<Result<SipHeader>>> Parse(string headers)
         {
 
-            StringReader reader = new StringReader(headerInUtf.Trim());
+            StringReader reader = new StringReader(headers.Trim());
 
             var parsedHeadersAsStrings = ParseFoldingHeaders(reader);
 

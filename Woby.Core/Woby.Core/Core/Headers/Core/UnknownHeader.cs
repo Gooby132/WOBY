@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Woby.Core.Core.Headers
+namespace Woby.Core.Core.Headers.Core
 {
     public class UnknownHeader : HeaderBase
     {
