@@ -1,10 +1,10 @@
 ﻿using FluentResults;
 using Microsoft.Extensions.Logging;
-using System.Reflection.PortableExecutable;
+using System.Collections.Generic;
 using System.Text;
 using Woby.Core.Core.Headers;
-using Woby.Core.Sip.Parsers.Headers;
-using Woby.Core.Sip.Parsers.RouteHeaderParser;
+using Woby.Core.Sip.Headers;
+using Woby.Core.Sip.Parsers.SpecializedHeaderParsers;
 using Woby.Core.Sip.Parsers.Utils;
 
 namespace Woby.Core.Sip.Parsers.Core
@@ -45,7 +45,6 @@ namespace Woby.Core.Sip.Parsers.Core
         #region Fields
 
         private readonly ILogger<SipHeaderParser> _logger;
-        private readonly SipRouteHeaderParser _sipRouteHeaderParser;
 
         #endregion
 
@@ -55,13 +54,12 @@ namespace Woby.Core.Sip.Parsers.Core
 
         #endregion
 
-        public SipHeaderParser(ILogger<SipHeaderParser> logger, SipRouteHeaderParser sipRouteHeaderParser) 
+        public SipHeaderParser(ILogger<SipHeaderParser> logger) 
         {
             _logger = logger;
-            _sipRouteHeaderParser = sipRouteHeaderParser;
         }
 
-        public Result<IEnumerable<HeaderBase>> Parse(string headerInUtf)
+        public Result<IEnumerable<Result<SipHeader>>> Parse(string headerInUtf)
         {
 
             StringReader reader = new StringReader(headerInUtf.Trim());
@@ -78,76 +76,39 @@ namespace Woby.Core.Sip.Parsers.Core
                 return Result.Fail(parsedHeadersAsStrings.Errors);
             }
 
-            var headersAsKeyValue = ParseHeadersStringsAsKeyValue(parsedHeadersAsStrings.Value);
+            var sipHeaders = parsedHeadersAsStrings
+                .Value
+                .Select(ParseSingleHeader);
 
-            if(headersAsKeyValue.IsFailed)
-            {
-                _logger.LogWarning("{this} failed to parse headers section to key value headers. error(s) - '{errors}'",
-                    this, string.Join(", ", parsedHeadersAsStrings.Reasons.Select(r => r.Message)));
+            var errors = sipHeaders
+                .Where(header => header.IsFailed)
+                .SelectMany(header => header.Errors);
 
-                return Result.Fail(headersAsKeyValue.Errors);
-            }
-
-            var sipHeaders = ParseHeaderParametersAsSipHeaders(headersAsKeyValue.Value);
-
-            if (sipHeaders.IsFailed)
-            {
-                _logger.LogWarning("{this} failed to parse headers to sip headers. error(s) - '{errors}'",
-                    this, string.Join(", ", sipHeaders.Reasons.Select(r => r.Message)));
-
-                return Result.Fail(headersAsKeyValue.Errors);
-            }
-
-            _logger.LogTrace("{this} objs - '{val}'", this, string.Join(Environment.NewLine, headersAsKeyValue.Value.Select(kv => $"{kv.Item1} - value {kv.Item2}")));
-
-            List<HeaderBase> parsedHeaders = new List<HeaderBase>();
-
-            foreach (var header in sipHeaders.Value)
-            {
-                if (_sipRouteHeaderParser.TryParse(header, out var parsed))
-                    parsedHeaders.Add(parsed);
-                else parsedHeaders.Add(new UnknownHeader(header.Key, header.Body));
-            }
-
-            return parsedHeaders;
+            return Result.Ok(sipHeaders).WithErrors(errors); // TODO : add a validation of headers that deems to be neccesery 
         }
 
-        private Result<IEnumerable<SipHeader>> ParseHeaderParametersAsSipHeaders(IEnumerable<(string, string)> keyValueHeaders)
+        public Result<SipHeader> ParseSingleHeader(string header)
         {
-            var sipHeaders = new List<SipHeader>();
+            (string, string) keyVal;
 
-            foreach (var keyValueHeader in keyValueHeaders)
+            var sections = header.Split(":", 2, StringSplitOptions.None);
+
+            if (sections.Length != 2)
+                return Result.Fail(SipCoreErrors.GeneralInvalidMessageError("Header does not contains a ':' seperator"));
+
+            keyVal = new(sections[0].Trim(), sections[1].Trim());
+
+            if (!HeaderFieldsUtils.TryParseHeaderParameters(keyVal.Item2, out var headerValue, out var parameters))
             {
-                if (!HeaderFieldsUtils.TryParseHeaderParameters(keyValueHeader.Item2, out var headerValue, out var parameters))
-                {
-                    _logger.LogWarning("{this} failed parsing header parameters for header name - '{name}' with value - {value}",
-                        this, keyValueHeader.Item1, keyValueHeader.Item2);
+                _logger.LogWarning("{this} failed parsing header parameters for header name - '{name}' with value - {value}",
+                    this, keyVal.Item1, keyVal.Item2);
 
-                    continue;
-                }
-
-                sipHeaders.Add(new (keyValueHeader.Item1, headerValue, HeaderTypes.Unknown, parameters));
+                return Result.Fail(SipCoreErrors.FailedParsingHeaderParameters());
             }
 
-            return sipHeaders;
+            return new SipHeader(keyVal.Item1, headerValue, HeaderType.Unknown, parameters);
         }
-        private Result<IEnumerable<(string, string)>> ParseHeadersStringsAsKeyValue(IEnumerable<string> headersAsStrings)
-        {
-            List<(string, string)> keyValueHeaders = new();
-
-            foreach (var header in headersAsStrings) 
-            { 
-                var sections = header.Split(":", 2, StringSplitOptions.None);
-
-                if(sections.Length != 2)
-                    return Result.Fail(SipCoreErrors.GeneralInvalidMessageError("Header does not contains a ':' seperator"));
-
-                keyValueHeaders.Add(new(sections[0].Trim(), sections[1].Trim()));
-            }
-
-            return keyValueHeaders;
-        }
-
+        
         private Result<IEnumerable<string>> ParseFoldingHeaders(StringReader reader)
         {
             List<string> headers = new();
@@ -176,6 +137,7 @@ namespace Woby.Core.Sip.Parsers.Core
 
             return Result.Ok<IEnumerable<string>>(headers);
         }
+
 
 
     }

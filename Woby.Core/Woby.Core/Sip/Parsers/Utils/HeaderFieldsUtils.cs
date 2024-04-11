@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Woby.Core.Sip.Parsers.Headers;
+using Woby.Core.Sip.Headers;
 
 namespace Woby.Core.Sip.Parsers.Utils
 {

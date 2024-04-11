@@ -2,11 +2,11 @@
 {
     public abstract class HeaderBase
     {
-        public HeaderTypes Type { get; }
+        public HeaderType Type { get; }
         public string Key { get; }
         public string Body { get; }
 
-        public HeaderBase(string key, string body, HeaderTypes type)
+        public HeaderBase(string key, string body, HeaderType type)
         {
             Key = key;
             Body = body;

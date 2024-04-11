@@ -16,7 +16,7 @@ namespace Woby.Core.Core.Headers
         public string? DisplayName { get; }
         public RouteIntake Direction { get; }
 
-        public Route(Uri uri, RouteIntake direction, string? displayName, string key, string body): base(key, body, HeaderTypes.Route)
+        public Route(Uri uri, RouteIntake direction, string? displayName, string key, string body): base(key, body, HeaderType.Route)
         {
             Uri = uri;
             Direction = direction;

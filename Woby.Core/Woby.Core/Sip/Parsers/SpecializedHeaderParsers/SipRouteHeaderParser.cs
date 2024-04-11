@@ -1,11 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Reflection.PortableExecutable;
 using Woby.Core.Core.Headers;
+using Woby.Core.Sip.Headers;
 using Woby.Core.Sip.Messages;
-using Woby.Core.Sip.Parsers.Headers;
 using static Woby.Core.Utils.Rfc.SyntaxHelper;
 
-namespace Woby.Core.Sip.Parsers.RouteHeaderParser
+namespace Woby.Core.Sip.Parsers.SpecializedHeaderParsers
 {
 
     /// <summary>

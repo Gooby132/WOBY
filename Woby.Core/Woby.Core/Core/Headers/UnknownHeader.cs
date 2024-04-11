@@ -8,7 +8,7 @@ namespace Woby.Core.Core.Headers
 {
     public class UnknownHeader : HeaderBase
     {
-        public UnknownHeader(string key, string body) : base(key, body, HeaderTypes.Unknown)
+        public UnknownHeader(string key, string body) : base(key, body, HeaderType.Unknown)
         {
         }
     }
