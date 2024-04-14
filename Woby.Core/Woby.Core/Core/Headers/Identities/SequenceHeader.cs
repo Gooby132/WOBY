@@ -9,12 +9,15 @@ namespace Woby.Core.Core.Headers.Identities
 {
     public class SequenceHeader : HeaderBase
     {
-
         public int Sequence { get; }
 
-        public SequenceHeader(string key, uint sequence, string body) : base(key, body, HeaderType.Identity)
+        // other protocols might not support this
+        public string? Method { get; }
+
+        public SequenceHeader(string key, uint sequence, string? method, string body) : base(key, body, HeaderType.Identity)
         {
             Sequence = (int)sequence;
+            Method = method;
         }
     }
 }

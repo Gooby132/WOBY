@@ -20,6 +20,9 @@ namespace Woby.Core.Sip.Messages
         public static readonly SipHeaderType CallId = new SipHeaderType("CallId", 7, "Call-Id", "i");
         public static readonly SipHeaderType ContentLength = new SipHeaderType("ContentLength", 8, "Content-Length", "l");
         public static readonly SipHeaderType ContentType = new SipHeaderType("ContentType", 9, "Content-Type", "c");
+        public static readonly SipHeaderType CSeq = new SipHeaderType("CSeq", 10, "CSeq", null);
+        public static readonly SipHeaderType MaxForwards = new SipHeaderType("MaxForwards", 11, "Max-Forwards", null);
+        public static readonly SipHeaderType Via = new SipHeaderType("Via", 12, "Via", "v");
 
         public string Key { get; }
         public string? CompactKey { get; }
@@ -35,8 +38,11 @@ namespace Woby.Core.Sip.Messages
             if (name == nameof(From) || name == "f") return From;
             if (name == nameof(To) || name == "t") return To;
             if (name == nameof(Contact) || name == "m") return Contact;
-            if (name == "Call-Id" || name == "i") return CallId;
+            if (name == "Call-ID" || name == "i") return CallId;
             if (name == "Content-Length" || name == "l") return CallId;
+            if (name == nameof(CSeq) ) return CSeq;
+            if (name == "Max-Forwards" ) return MaxForwards;
+            if (name == "Via" || name == "v" ) return Via;
 
             return NotSet;
         }

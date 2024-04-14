@@ -3,8 +3,12 @@ using Microsoft.Extensions.Logging;
 using System.Text;
 using Woby.Core.Core.Errors.Common;
 using Woby.Core.Core.Headers;
+using Woby.Core.Core.Headers.Core;
+using Woby.Core.Core.Headers.Identities;
+using Woby.Core.Core.Headers.Routings;
 using Woby.Core.Core.Messages;
 using Woby.Core.Network;
+using Woby.Core.Sip.Parsers.SpecializedHeaderParsers;
 
 namespace Woby.Core.Sip.Parsers.Core
 {
@@ -15,6 +19,7 @@ namespace Woby.Core.Sip.Parsers.Core
 
         private readonly ILogger<SipCoreParser> _logger;
         private readonly SipCoreHeaderParser _sipHeaderParser;
+        private readonly SipSpecializedHeaderParser _sipSpecializedHeaderParser;
 
         #endregion
 
@@ -30,89 +35,73 @@ namespace Woby.Core.Sip.Parsers.Core
         #endregion
 
         #region Constructor
-        public SipCoreParser(ILogger<SipCoreParser> logger, SipCoreHeaderParser sipHeaderParser)
+        public SipCoreParser(
+            ILogger<SipCoreParser> logger,
+            SipCoreHeaderParser sipHeaderParser,
+            SipSpecializedHeaderParser sipSpecializedHeaderParser)
         {
             _logger = logger;
             _sipHeaderParser = sipHeaderParser;
+            _sipSpecializedHeaderParser = sipSpecializedHeaderParser;
         }
 
         #endregion
 
-        public Result<MessageBase> Parse(string message, NetworkProtocols protocol)
+        public Result<MessageBase> Parse(string message, NetworkProtocol protocol)
         {
 
             #region Headers Parse
 
             // it is importent to consider folding stracture headers
             var parts = message.Split("\r\n\r\n");
-            _sipHeaderParser.Parse(parts[0]);
+            var sipHeaders = _sipHeaderParser.Parse(parts[0]);
+
+            if(sipHeaders.IsFailed)
+            {
+                // add log
+
+                return Result.Fail(sipHeaders.Errors);
+            }
+
+            List<HeaderBase> coreHeaders = new List<HeaderBase>();
+            DialogId? id = null;
+            SequenceHeader? sequence = null;
+            Route? to = null;
+            Route? from = null;
+            List<Route> proxies = new List<Route>();   
+
+            foreach (var header in sipHeaders.Value)
+            {
+                var coreHeader = _sipSpecializedHeaderParser.Parse(header.Value);
+
+                if(coreHeader.IsFailed)
+                {
+                    _logger.LogWarning("{this} failed to parse sip header. errors(s) - '{errors}'", this, header.Reasons.Select(r => r.Message));
+                    continue;
+                }
+
+                if (id is null && coreHeader.Value is DialogId dialogId)
+                    id = dialogId;
+
+                if (to is null && coreHeader.Value is Route toRoute)
+                    to = toRoute.Role == RouteRole.Recipient ? toRoute : null;
+
+                if (from is null && coreHeader.Value is Route fromRoute)
+                    from = fromRoute.Role == RouteRole.Sender ? fromRoute : null;
+
+                if (coreHeader.Value is Route proxyRoute && proxyRoute.Role == RouteRole.Proxy)
+                    proxies.Add(proxyRoute);
+
+                if(sequence is null && coreHeader.Value is Route)
+
+                if (coreHeader.IsSuccess)
+                    coreHeaders.Add(coreHeader.Value);
+                else
+                    _logger.LogWarning("{this} failed to parse header - '{header}'", this, coreHeader.Errors.Select(r => r.Message));
+            }
 
             #endregion
 
-            //string? requestUri = reader.ReadLine();
-
-            //if (string.IsNullOrEmpty(requestUri))
-            //{
-            //    errors.Add(SipCoreErrors.MissingRequestUri());
-            //    return Result.Fail(errors);
-            //}
-
-            //string? via = reader.ReadLine();
-
-            //if (string.IsNullOrEmpty(via))
-            //{
-            //    errors.Add(SipCoreErrors.MissingVia());
-            //    return Result.Fail(errors);
-            //}
-
-            //string? maxForward = reader.ReadLine();
-            //if (string.IsNullOrEmpty(maxForward))
-            //{
-            //    errors.Add(SipCoreErrors.MissingMaxForward());
-            //    return Result.Fail(errors);
-            //}
-
-            //if(int.TryParse(maxForward, out var maxForwardValue))
-            //{
-            //    errors.Add(SipCoreErrors.CSeqCouldNotBeParsed());
-            //    return Result.Fail(errors);
-            //}
-
-            //string? to = reader.ReadLine();
-            //if (string.IsNullOrEmpty(to))
-            //{
-            //    errors.Add(SipCoreErrors.MissingTo());
-            //    return Result.Fail(errors);
-            //}
-
-            //string? from = reader.ReadLine();
-            //if (string.IsNullOrEmpty(from))
-            //{
-            //    errors.Add(SipCoreErrors.MissingFrom());
-            //    return Result.Fail(errors);
-            //}
-
-            //string? callId = reader.ReadLine();
-            //if (string.IsNullOrEmpty(callId))
-            //{
-            //    errors.Add(SipCoreErrors.MissingCallId());
-            //    return Result.Fail(errors);
-            //}
-
-            //string? cSeq = reader.ReadLine();
-            //if (string.IsNullOrEmpty(cSeq))
-            //{
-            //    errors.Add(SipCoreErrors.MissingCSeq());
-            //    return Result.Fail(errors);
-            //}
-
-            //var cSeqFields = cSeq.Split(" ");
-
-            //if (!int.TryParse(cSeqFields[0], out _))
-            //{
-            //    errors.Add(SipCoreErrors.CSeqCouldNotBeParsed());
-            //    return Result.Fail(errors);
-            //}
             return Result.Fail(SipCoreErrors.GeneralInvalidMessageError("Not yet implemented"));
         }
 

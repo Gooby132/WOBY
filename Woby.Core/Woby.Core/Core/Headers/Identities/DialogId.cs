@@ -4,7 +4,8 @@ namespace Woby.Core.Core.Headers.Identities
 {
     public class DialogId : HeaderBase
     {
-        public DialogId(string key, string body, HeaderType type) : base(key, body, type)
+        public string Id => Body;
+        public DialogId(string key, string body) : base(key, body, HeaderType.Identity)
         {
 
         }

@@ -1,4 +1,5 @@
 ﻿using FluentResults;
+using System.Net;
 using Woby.Core.Core.Headers.Core;
 
 namespace Woby.Core.Core.Headers.Routings
@@ -12,14 +13,25 @@ namespace Woby.Core.Core.Headers.Routings
     /// </summary>
     public class Route : HeaderBase
     {
-
         public Uri Uri { get; }
+        public RouteRole Role { get; }
         public string? DisplayName { get; }
+        public string? Protocol { get; }
 
-        public Route(Uri uri, string? displayName, string key, string body) : base(key, body, HeaderType.Routing)
+        internal Route(
+            Uri uri,
+            RouteRole role, 
+            string key, 
+            string body,
+            string? protocol = null, 
+            string? displayName = null) : base(key, body, HeaderType.Routing)
         {
             Uri = uri;
+            Role = role;
             DisplayName = displayName;
+            Protocol = protocol;
         }
+
+        // no equaty required as body and key are compared
     }
 }

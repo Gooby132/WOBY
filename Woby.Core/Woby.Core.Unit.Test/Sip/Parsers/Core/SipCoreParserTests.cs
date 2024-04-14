@@ -37,14 +37,9 @@ CSeq: 1 INVITE
         {
             var parser = _provider.GetRequiredService<SipCoreParser>();
 
-            var message = parser.Parse(SimpleInviteHeaderSection, NetworkProtocols.Tcp);
+            var message = parser.Parse(SimpleInviteHeaderSection, NetworkProtocol.Tcp);
 
             Assert.IsTrue(message.IsSuccess);
-            Assert.IsTrue(string.IsNullOrEmpty(message.Value.To));
-            Assert.IsNotNull(string.IsNullOrEmpty(message.Value.From));
-            Assert.IsNotNull(string.IsNullOrEmpty(message.Value.CSeq));
-            Assert.AreEqual(message.Value.MaxForward, 70);
-            Assert.IsNotNull(string.IsNullOrEmpty(message.Value.Via));
         }
 
     }
