@@ -2,7 +2,7 @@
 using Woby.Core.Network;
 using Woby.Core.Sip.Parsers.Core;
 using Serilog;
-using Woby.Core.Sip.Parsers.SpecializedHeaderParsers;
+using Woby.Core.Sip.Converters;
 
 namespace Woby.Core.Unit.Test.Sip.Parsers.Core
 {
@@ -27,7 +27,7 @@ CSeq: 1 INVITE
             collection.AddLogging(conf => conf.AddSerilog());
             collection.AddTransient<SipCoreParser>();
             collection.AddTransient<SipCoreHeaderParser>();
-            collection.AddTransient<SipSpecializedHeaderParser>();
+            collection.AddTransient<SipConverter>();
 
             _provider = collection.BuildServiceProvider();
         }

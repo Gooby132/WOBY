@@ -2,9 +2,9 @@
 using Serilog;
 using Woby.Core.Core.Headers.Core;
 using Woby.Core.Core.Parsers;
+using Woby.Core.Sip.Converters;
 using Woby.Core.Sip.Headers;
 using Woby.Core.Sip.Parsers.Core;
-using Woby.Core.Sip.Parsers.SpecializedHeaderParsers;
 
 namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
 {
@@ -14,7 +14,7 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
 
         private ServiceProvider _provider;
         private SipCoreHeaderParser _headerParser;
-        private SipSpecializedHeaderParser _specializedParser;
+        private SipConverter _specializedParser;
 
         [TestInitialize]
         public void TestInitialize()
@@ -23,11 +23,11 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
 
             services.AddLogging(conf => conf.AddSerilog());
             services.AddTransient<SipCoreHeaderParser>();
-            services.AddTransient<SipSpecializedHeaderParser>();
+            services.AddTransient<SipConverter>();
 
             _provider = services.BuildServiceProvider();
             _headerParser = _provider.GetRequiredService<SipCoreHeaderParser>();
-            _specializedParser = _provider.GetRequiredService<SipSpecializedHeaderParser>();
+            _specializedParser = _provider.GetRequiredService<SipConverter>();
         }
 
         [TestMethod]

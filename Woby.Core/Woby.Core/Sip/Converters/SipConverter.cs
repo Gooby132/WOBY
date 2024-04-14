@@ -11,7 +11,7 @@ using Woby.Core.Sip.Headers;
 using Woby.Core.Sip.Messages;
 using static Woby.Core.Utils.Rfc.SyntaxHelper;
 
-namespace Woby.Core.Sip.Parsers.SpecializedHeaderParsers
+namespace Woby.Core.Sip.Converters
 {
 
     /// <summary>
@@ -25,13 +25,13 @@ namespace Woby.Core.Sip.Parsers.SpecializedHeaderParsers
     /// These rules for parsing a display name, URI and URI parameters, and header parameters also apply for the header fields To and From.
     /// 
     /// </summary>
-    public class SipSpecializedHeaderParser
+    public class SipConverter
     {
 
         public static readonly char[] Whitespaces = [' ', '\t', '\n', '\r'];
-        private readonly ILogger<SipSpecializedHeaderParser> _logger;
+        private readonly ILogger<SipConverter> _logger;
 
-        public SipSpecializedHeaderParser(ILogger<SipSpecializedHeaderParser> logger)
+        public SipConverter(ILogger<SipConverter> logger)
         {
             _logger = logger;
         }

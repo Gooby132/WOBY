@@ -8,7 +8,7 @@ using Woby.Core.Core.Headers.Identities;
 using Woby.Core.Core.Headers.Routings;
 using Woby.Core.Core.Messages;
 using Woby.Core.Network;
-using Woby.Core.Sip.Parsers.SpecializedHeaderParsers;
+using Woby.Core.Sip.Converters;
 
 namespace Woby.Core.Sip.Parsers.Core
 {
@@ -19,7 +19,7 @@ namespace Woby.Core.Sip.Parsers.Core
 
         private readonly ILogger<SipCoreParser> _logger;
         private readonly SipCoreHeaderParser _sipHeaderParser;
-        private readonly SipSpecializedHeaderParser _sipSpecializedHeaderParser;
+        private readonly SipConverter _sipSpecializedHeaderParser;
 
         #endregion
 
@@ -38,7 +38,7 @@ namespace Woby.Core.Sip.Parsers.Core
         public SipCoreParser(
             ILogger<SipCoreParser> logger,
             SipCoreHeaderParser sipHeaderParser,
-            SipSpecializedHeaderParser sipSpecializedHeaderParser)
+            SipConverter sipSpecializedHeaderParser)
         {
             _logger = logger;
             _sipHeaderParser = sipHeaderParser;
