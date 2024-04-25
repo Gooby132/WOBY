@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using Woby.Core.Core.Headers.Core;
-using Woby.Core.Sip.Headers;
-using Woby.Core.Sip.Parsers.Core;
+using Woby.Core.CommonLanguage.Signaling.Core;
+using Woby.Core.Signaling.Sip.Headers;
+using Woby.Core.Signaling.Sip.Parsers.Core;
 
 namespace Woby.Core.Unit.Test.Sip.Parsers.Core
 {
@@ -17,7 +17,7 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.Core
             ServiceCollection services = new ServiceCollection();
 
             services.AddLogging(conf => conf.AddSerilog());
-            services.AddTransient<SipCoreHeaderParser>();
+            services.AddTransient<SipSignalingHeaderParser>();
 
             _provider = services.BuildServiceProvider();
         }
@@ -25,7 +25,7 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.Core
         [TestMethod]
         public void ParseSipHeaders_GeneralFrom_Successful()
         {
-            var parser = _provider.GetRequiredService<SipCoreHeaderParser>();
+            var parser = _provider.GetRequiredService<SipSignalingHeaderParser>();
 
             string test1 = "From: \"Alice\" sip:alice@example.com;tag=12345";
             string test2 = "From: sip:alice@example.com;tag=54321";
@@ -80,7 +80,7 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.Core
         [TestMethod]
         public void ParseSipHeaders_GeneralTo_Successful()
         {
-            var parser = _provider.GetRequiredService<SipCoreHeaderParser>();
+            var parser = _provider.GetRequiredService<SipSignalingHeaderParser>();
 
             string test1 = "To: \"Bob\" sip:bob@example.net";
             string test2 = "To: sip:bob@example.net;tag=98765";
@@ -132,7 +132,7 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.Core
         [TestMethod]
         public void ParseSipHeaders_GeneralVia_Successful()
         {
-            var parser = _provider.GetRequiredService<SipCoreHeaderParser>();
+            var parser = _provider.GetRequiredService<SipSignalingHeaderParser>();
 
             string test1 = "Via: SIP/2.0/UDP 192.0.2.1:5060;branch=z9hG4bK874h87";
             string test2 = "Via: SIP/2.0/UDP 198.51.100.1:5060;branch=z9hG4bKaa76d";

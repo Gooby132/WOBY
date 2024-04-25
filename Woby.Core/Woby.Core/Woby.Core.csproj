@@ -9,6 +9,8 @@
   <ItemGroup>
     <Folder Include="Core\Errors\Parsers\" />
     <Folder Include="Sdp\" />
+    <Folder Include="Signaling\Sip\Builder\Errors\" />
+    <Folder Include="Signaling\Sip\Builder\Core\" />
   </ItemGroup>
 
 	<ItemGroup>

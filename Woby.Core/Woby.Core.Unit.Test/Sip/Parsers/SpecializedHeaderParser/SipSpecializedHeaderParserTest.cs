@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using Woby.Core.Core.Headers.Core;
+using Woby.Core.CommonLanguage.Signaling.Core;
 using Woby.Core.Core.Parsers;
-using Woby.Core.Sip.Converters;
-using Woby.Core.Sip.Headers;
-using Woby.Core.Sip.Parsers.Core;
+using Woby.Core.Signaling.Sip.Converters;
+using Woby.Core.Signaling.Sip.Headers;
+using Woby.Core.Signaling.Sip.Parsers.Core;
 
 namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
 {
@@ -13,7 +13,7 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
     {
 
         private ServiceProvider _provider;
-        private SipCoreHeaderParser _headerParser;
+        private SipSignalingHeaderParser _headerParser;
         private SipConverter _specializedParser;
 
         [TestInitialize]
@@ -22,11 +22,11 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
             ServiceCollection services = new ServiceCollection();
 
             services.AddLogging(conf => conf.AddSerilog());
-            services.AddTransient<SipCoreHeaderParser>();
+            services.AddTransient<SipSignalingHeaderParser>();
             services.AddTransient<SipConverter>();
 
             _provider = services.BuildServiceProvider();
-            _headerParser = _provider.GetRequiredService<SipCoreHeaderParser>();
+            _headerParser = _provider.GetRequiredService<SipSignalingHeaderParser>();
             _specializedParser = _provider.GetRequiredService<SipConverter>();
         }
 
