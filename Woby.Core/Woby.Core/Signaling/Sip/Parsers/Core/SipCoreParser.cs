@@ -1,12 +1,12 @@
 ﻿using FluentResults;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using Woby.Core.CommonLanguage.Messages;
+using Woby.Core.CommonLanguage.Signaling.Core;
+using Woby.Core.CommonLanguage.Signaling.Identities;
+using Woby.Core.CommonLanguage.Signaling.Routings;
 using Woby.Core.Core.Errors.Common;
 using Woby.Core.Core.Headers;
-using Woby.Core.Core.Headers.Core;
-using Woby.Core.Core.Headers.Identities;
-using Woby.Core.Core.Headers.Routings;
-using Woby.Core.Core.Messages;
 using Woby.Core.Network.Core;
 using Woby.Core.Signaling.Sip.Converters;
 

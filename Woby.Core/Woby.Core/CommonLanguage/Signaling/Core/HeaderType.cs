@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Woby.Core.Core.Headers.Core
+namespace Woby.Core.CommonLanguage.Signaling.Core
 {
     public class HeaderType : SmartEnum<HeaderType>
     {
