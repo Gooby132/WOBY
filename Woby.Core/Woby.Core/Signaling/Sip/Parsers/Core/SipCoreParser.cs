@@ -1,12 +1,10 @@
 ﻿using FluentResults;
 using Microsoft.Extensions.Logging;
-using System.Text;
+using System.Reflection.PortableExecutable;
 using Woby.Core.CommonLanguage.Messages;
 using Woby.Core.CommonLanguage.Signaling.Core;
 using Woby.Core.CommonLanguage.Signaling.Identities;
 using Woby.Core.CommonLanguage.Signaling.Routings;
-using Woby.Core.Core.Errors.Common;
-using Woby.Core.Core.Headers;
 using Woby.Core.Network.Core;
 using Woby.Core.Signaling.Sip.Converters;
 
@@ -19,7 +17,7 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
 
         private readonly ILogger<SipCoreParser> _logger;
         private readonly SipSignalingHeaderParser _sipHeaderParser;
-        private readonly SipConverter _sipSpecializedHeaderParser;
+        private readonly SipConverter _sipConverter;
 
         #endregion
 
@@ -42,15 +40,13 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
         {
             _logger = logger;
             _sipHeaderParser = sipHeaderParser;
-            _sipSpecializedHeaderParser = sipSpecializedHeaderParser;
+            _sipConverter = sipSpecializedHeaderParser;
         }
 
         #endregion
 
         public Result<MessageBase> Parse(string message, NetworkProtocol protocol)
         {
-
-            #region Headers Parse
 
             // it is importent to consider folding stracture headers
             var parts = message.Split("\r\n\r\n");
@@ -63,46 +59,29 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
                 return Result.Fail(sipHeaders.Errors);
             }
 
-            List<SignalingHeader> coreHeaders = new List<SignalingHeader>();
-            DialogId? id = null;
-            SequenceHeader? sequence = null;
-            Route? to = null;
-            Route? from = null;
-            List<Route> proxies = new List<Route>();
-
+            // log header warnings
             foreach (var header in sipHeaders.Value)
             {
-                var coreHeader = _sipSpecializedHeaderParser.Parse(header.Value);
-
-                if (coreHeader.IsFailed)
+                if (header.IsFailed)
                 {
-                    _logger.LogWarning("{this} failed to parse sip header. errors(s) - '{errors}'", this, header.Reasons.Select(r => r.Message));
-                    continue;
+                    _logger.LogWarning("{this} failed to convert header. error - '{errors}'",
+                        this, string.Join(", ", header.Reasons.Select(r => r.Message)));
                 }
-
-                if (id is null && coreHeader.Value is DialogId dialogId)
-                    id = dialogId;
-
-                if (to is null && coreHeader.Value is Route toRoute)
-                    to = toRoute.Role == RouteRole.Recipient ? toRoute : null;
-
-                if (from is null && coreHeader.Value is Route fromRoute)
-                    from = fromRoute.Role == RouteRole.Sender ? fromRoute : null;
-
-                if (coreHeader.Value is Route proxyRoute && proxyRoute.Role == RouteRole.Proxy)
-                    proxies.Add(proxyRoute);
-
-                if (sequence is null && coreHeader.Value is Route)
-
-                    if (coreHeader.IsSuccess)
-                        coreHeaders.Add(coreHeader.Value);
-                    else
-                        _logger.LogWarning("{this} failed to parse header - '{header}'", this, coreHeader.Errors.Select(r => r.Message));
             }
 
-            #endregion
+            var section = _sipConverter.Parse(
+                sipHeaders
+                    .Value
+                    .Where(header => header.IsSuccess)
+                    .Select(header => header.Value));
 
-            return Result.Fail(SipCoreErrors.GeneralInvalidMessageError("Not yet implemented"));
+            if (section.IsFailed)
+            {
+                _logger.LogWarning("{this} failed to convert section. error - '{errors}'",
+                    this, string.Join(", ", section.Reasons.Select(r => r.Message)));
+            }
+
+            return Result.Ok(new MessageBase(section.Value));
         }
 
         public override string ToString() => Name;

@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Woby.Core.CommonLanguage.Signaling.Core;
-using Woby.Core.Core.Parsers;
 using Woby.Core.Signaling.Sip.Converters;
 using Woby.Core.Signaling.Sip.Headers;
 using Woby.Core.Signaling.Sip.Parsers.Core;

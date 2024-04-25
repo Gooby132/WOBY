@@ -1,11 +1,14 @@
 ﻿using FluentResults;
 using Microsoft.Extensions.Logging;
+using System.Collections.Immutable;
+using Woby.Core.CommonLanguage.Messages;
 using Woby.Core.CommonLanguage.Signaling.Core;
+using Woby.Core.CommonLanguage.Signaling.Identities;
 using Woby.Core.CommonLanguage.Signaling.Routings;
-using Woby.Core.Core.Headers.Identities;
 using Woby.Core.Network.Core;
 using Woby.Core.Signaling.Sip.Headers;
 using Woby.Core.Signaling.Sip.Messages;
+using Woby.Core.Signaling.Sip.Parsers.Core;
 using static Woby.Core.Utils.Rfc.SyntaxHelper;
 
 namespace Woby.Core.Signaling.Sip.Converters
@@ -33,13 +36,69 @@ namespace Woby.Core.Signaling.Sip.Converters
             _logger = logger;
         }
 
+        public Result<SignalingSection> Parse(IEnumerable<SipHeader> sipHeaders)
+        {
+            List<SignalingHeader> coreHeaders = new List<SignalingHeader>();
+            DialogId? id = null;
+            SequenceHeader? sequence = null;
+            MaxForwardings? maxForwardings = null;
+            Route? to = null;
+            Route? from = null;
+            List<Route> proxies = new List<Route>();
+
+            foreach (var header in sipHeaders)
+            {
+                var coreHeader = Parse(header);
+
+                if (coreHeader.IsFailed)
+                {
+                    _logger.LogWarning("{this} failed to parse sip header. errors(s) - '{errors}'", this, coreHeader.Reasons.Select(r => r.Message));
+                    continue;
+                }
+
+                if (id is null && coreHeader.Value is DialogId dialogId)
+                    id = dialogId;
+
+                if (to is null && coreHeader.Value is Route toRoute)
+                    to = toRoute.Role == RouteRole.Recipient ? toRoute : null;
+
+                if (from is null && coreHeader.Value is Route fromRoute)
+                    from = fromRoute.Role == RouteRole.Sender ? fromRoute : null;
+
+                if (coreHeader.Value is Route proxyRoute && proxyRoute.Role == RouteRole.Proxy)
+                    proxies.Add(proxyRoute);
+
+                if (sequence is null && coreHeader.Value is Route)
+
+                    if (coreHeader.IsSuccess)
+                        coreHeaders.Add(coreHeader.Value);
+                    else
+                        _logger.LogWarning("{this} failed to parse header - '{header}'", this, coreHeader.Errors.Select(r => r.Message));
+            }
+
+            if (id is null)
+                return Result.Fail(SipCoreErrors.MissingCallId());
+
+            if (to is null)
+                return Result.Fail(SipCoreErrors.MissingTo());
+
+            if (from is null)
+                return Result.Fail(SipCoreErrors.MissingFrom());
+
+            if (sequence is null)
+                return Result.Fail(SipCoreErrors.MissingCSeq());
+
+            return Result.Ok(
+                new SignalingSection(id, sequence, maxForwardings, to, from, proxies.ToImmutableList()));
+        }
+
         public Result<SignalingHeader> Parse(SipHeader sipHeader)
         {
             SignalingHeader? temp = null;
-            var type = SipHeaderType.GetType(sipHeader.Key);
+            var type = SipMethods.GetType(sipHeader.Key);
 
             type
-                .When([SipHeaderType.From, SipHeaderType.To, SipHeaderType.Contact])
+                .When([SipMethods.From, SipMethods.To, SipMethods.Contact])
                 .Then(() =>
                 {
                     // Address Specification ; https://datatracker.ietf.org/doc/html/rfc2822#section-3.4
@@ -52,9 +111,9 @@ namespace Woby.Core.Signaling.Sip.Converters
 
                     RouteRole role = RouteRole.NotSet;
                     type
-                        .When(SipHeaderType.From)
+                        .When(SipMethods.From)
                         .Then(() => role = RouteRole.Sender)
-                        .When(SipHeaderType.To)
+                        .When(SipMethods.To)
                         .Then(() => role = RouteRole.Recipient);
 
                     if (Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out var uri))
@@ -67,13 +126,13 @@ namespace Woby.Core.Signaling.Sip.Converters
                             displayName: displayName);
                     }
                 })
-                .When([SipHeaderType.CallId])
+                .When([SipMethods.CallId])
                 .Then(() =>
                 {
                     // no parsing required
                     temp = new DialogId(sipHeader.Key, sipHeader.Body);
                 })
-                .When([SipHeaderType.CSeq])
+                .When([SipMethods.CSeq])
                 .Then(() =>
                 {
                     string[] sections = sipHeader.Body.Split(Whitespaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -89,7 +148,7 @@ namespace Woby.Core.Signaling.Sip.Converters
 
                     temp = new SequenceHeader(sipHeader.Key, sequence, sections[1], sipHeader.Body);
                 })
-                .When([SipHeaderType.MaxForwards])
+                .When([SipMethods.MaxForwards])
                 .Then(() =>
                 {
 
@@ -107,7 +166,7 @@ namespace Woby.Core.Signaling.Sip.Converters
                     // no parsing required
                     temp = new MaxForwardings(sipHeader.Key, maxForwarding, sipHeader.Body);
                 })
-                .When([SipHeaderType.Via])
+                .When([SipMethods.Via])
                 .Then(() =>
                 {
                     int index;

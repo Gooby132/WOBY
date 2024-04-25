@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Woby.Core.Core.Headers;
 using static System.Collections.Specialized.BitVector32;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -25,6 +24,7 @@ namespace Woby.Core.Utils.Rfc
             public static readonly char Quote = (char)34;
             public static readonly char LessThan = '<';
             public static readonly char GreaterThan = '>';
+            public static readonly string Crlf = "\r\n";
             public static readonly Regex Numbers = new Regex("[1-9]");
             public static readonly Regex Rfc2822TextPatten = new Regex("^[\x01-\x09\x0B\x0C\x0E-\x7F]*$");
             public static readonly Regex Rfc2822SpecialsPatten = new Regex("[\\(\\)\\<\\>\\[\\]\\:\\;\\@\\\\\\,\\.\\\"\"]");
@@ -68,6 +68,9 @@ namespace Woby.Core.Utils.Rfc
                 displayName = string.Join(' ', sections[0..(sections.Length - 1)]);
                 return TryParseAngleAddr(sections[sections.Length - 1], out address);
             }
+
+            public static string CreateNameAddr(string address, string? displayName) => string.Format("\"{0}\" <{1}>", displayName ?? string.Empty, address);
+        
         }
 
     }
