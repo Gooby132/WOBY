@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Woby.Core.CommonLanguage.Signaling.Core
 {
@@ -16,6 +17,9 @@ namespace Woby.Core.CommonLanguage.Signaling.Core
             Type = type;
             AdditinalMetadata = additinalMetadata;
         }
+
+        [MemberNotNullWhen(true, nameof(AdditinalMetadata))]
+        public bool HasAdditinalMetadata() => AdditinalMetadata is not null && AdditinalMetadata.Any();
 
         public static bool operator ==(SignalingHeader left, SignalingHeader right) =>
             left.Type == right.Type &&

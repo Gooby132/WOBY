@@ -17,7 +17,7 @@ namespace Woby.Core.Signaling.Sip.Messages
         public static readonly SipMethods AcceptEncoding = new SipMethods("AcceptEncoding", 4, "Accept-Encoding", null);
         public static readonly SipMethods Accept = new SipMethods("Accept", 5, "Accept", null);
         public static readonly SipMethods AcceptLanguage = new SipMethods("Accept-Language", 6, "Accept-Language", null);
-        public static readonly SipMethods CallId = new SipMethods("CallId", 7, "Call-Id", "i");
+        public static readonly SipMethods CallId = new SipMethods("CallId", 7, "Call-ID", "i");
         public static readonly SipMethods ContentLength = new SipMethods("ContentLength", 8, "Content-Length", "l");
         public static readonly SipMethods ContentType = new SipMethods("ContentType", 9, "Content-Type", "c");
         public static readonly SipMethods CSeq = new SipMethods("CSeq", 10, "CSeq", null);
@@ -39,7 +39,8 @@ namespace Woby.Core.Signaling.Sip.Messages
             if (name == nameof(To) || name == "t") return To;
             if (name == nameof(Contact) || name == "m") return Contact;
             if (name == "Call-ID" || name == "i") return CallId;
-            if (name == "Content-Length" || name == "l") return CallId;
+            if (name == "Content-Length" || name == "l") return ContentLength;
+            if (name == "Content-Type" || name == "l") return ContentType;
             if (name == nameof(CSeq)) return CSeq;
             if (name == "Max-Forwards") return MaxForwards;
             if (name == "Via" || name == "v") return Via;

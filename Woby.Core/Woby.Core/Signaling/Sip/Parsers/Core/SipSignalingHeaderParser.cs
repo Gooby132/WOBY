@@ -60,7 +60,7 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
         public Result<IEnumerable<Result<SipHeader>>> Parse(string headers)
         {
 
-            StringReader reader = new StringReader(headers.Trim());
+            StringReader reader = new StringReader(headers);
 
             var parsedHeadersAsStrings = ParseFoldingHeaders(reader);
 
@@ -126,9 +126,9 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
                 if (character == '\n')
                 {
                     // if not whitespace its the end of the header (see folding headers)
-                    if (!char.IsWhiteSpace((char)reader.Peek()))
+                    if (!char.IsWhiteSpace((char)reader.Peek()) || (char)reader.Peek() == '\r')
                     {
-                        headers.Add(headerBuilder.ToString());
+                        headers.Add(headerBuilder.ToString().TrimEnd());
                         headerBuilder = new StringBuilder();
                         continue;
                     }

@@ -1,7 +1,9 @@
 ﻿using FluentResults;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using Woby.Core.CommonLanguage.Messages;
+using Woby.Core.CommonLanguage.Signaling.ContentMeta;
 using Woby.Core.CommonLanguage.Signaling.Core;
 using Woby.Core.CommonLanguage.Signaling.Identities;
 using Woby.Core.CommonLanguage.Signaling.Routings;
@@ -45,6 +47,8 @@ namespace Woby.Core.Signaling.Sip.Converters
             Route? to = null;
             Route? from = null;
             List<Route> proxies = new List<Route>();
+            ContentType? contentType = null;
+            ContentLength? contentLength = null;
 
             foreach (var header in sipHeaders)
             {
@@ -57,23 +61,52 @@ namespace Woby.Core.Signaling.Sip.Converters
                 }
 
                 if (id is null && coreHeader.Value is DialogId dialogId)
+                {
                     id = dialogId;
+                    continue;
+                }
 
                 if (to is null && coreHeader.Value is Route toRoute)
+                {
                     to = toRoute.Role == RouteRole.Recipient ? toRoute : null;
+                }
 
                 if (from is null && coreHeader.Value is Route fromRoute)
+                {
                     from = fromRoute.Role == RouteRole.Sender ? fromRoute : null;
+                }
 
                 if (coreHeader.Value is Route proxyRoute && proxyRoute.Role == RouteRole.Proxy)
+                {
                     proxies.Add(proxyRoute);
+                    continue;
+                }
 
-                if (sequence is null && coreHeader.Value is Route)
+                if (maxForwardings is null && coreHeader.Value is MaxForwardings maxForwardingsRoute)
+                {
+                    maxForwardings = maxForwardingsRoute;
+                    continue;
+                }
 
-                    if (coreHeader.IsSuccess)
-                        coreHeaders.Add(coreHeader.Value);
-                    else
-                        _logger.LogWarning("{this} failed to parse header - '{header}'", this, coreHeader.Errors.Select(r => r.Message));
+                if (sequence is null && coreHeader.Value is SequenceHeader sequenceHeader)
+                {
+                    sequence = sequenceHeader;
+                    continue;
+                }
+
+                if (contentLength is null && coreHeader.Value is ContentLength contentLengthHeader)
+                {
+                    contentLength = contentLengthHeader;
+                    continue;
+                }
+
+                if (contentType is null && coreHeader.Value is ContentType contentTypeHeader)
+                {
+                    contentType = contentTypeHeader;
+                    continue;
+                }
+
+                _logger.LogWarning("{this} failed to parse header - '{header}'", this, coreHeader.Errors.Select(r => r.Message));
             }
 
             if (id is null)
@@ -88,8 +121,25 @@ namespace Woby.Core.Signaling.Sip.Converters
             if (sequence is null)
                 return Result.Fail(SipCoreErrors.MissingCSeq());
 
+            if (maxForwardings is null)
+                return Result.Fail(SipCoreErrors.MissingMaxForward());
+
+            if (contentType is null)
+                return Result.Fail(SipCoreErrors.MissingContentType());
+
+            if (contentLength is null)
+                return Result.Fail(SipCoreErrors.MissingContentLength());
+
             return Result.Ok(
-                new SignalingSection(id, sequence, maxForwardings, to, from, proxies.ToImmutableList()));
+                new SignalingSection(
+                    id,
+                    sequence,
+                    maxForwardings,
+                    to,
+                    from,
+                    proxies.ToImmutableList(),
+                    contentType,
+                    contentLength));
         }
 
         public Result<SignalingHeader> Parse(SipHeader sipHeader)
@@ -118,12 +168,23 @@ namespace Woby.Core.Signaling.Sip.Converters
 
                     if (Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out var uri))
                     {
+                        Dictionary<string, string>? d = null;
+
+                        if (sipHeader.HasParamerters())
+                        {
+                            d = new Dictionary<string, string>();
+
+                            foreach (var p in sipHeader.Parameters)
+                                d.Add(p.Name, p.Value);
+                        }
+
                         temp = new Route(
                             uri,
                             role,
                             sipHeader.Key,
                             sipHeader.Body,
-                            displayName: displayName);
+                            displayName: displayName,
+                            additinalMetadata: d?.ToImmutableDictionary());
                     }
                 })
                 .When([SipMethods.CallId])
@@ -151,7 +212,6 @@ namespace Woby.Core.Signaling.Sip.Converters
                 .When([SipMethods.MaxForwards])
                 .Then(() =>
                 {
-
                     string[] sections = sipHeader.Body.Split(Whitespaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
                     if (sections.Length != 1)
@@ -213,14 +273,40 @@ namespace Woby.Core.Signaling.Sip.Converters
 
                     if (Uri.TryCreate(addressSection, UriKind.RelativeOrAbsolute, out var uri))
                     {
+                        Dictionary<string, string>? d = null;
+
+                        if (sipHeader.HasParamerters())
+                        {
+                            d = new Dictionary<string, string>();
+
+                            foreach (var p in sipHeader.Parameters)
+                                d.Add(p.Name, p.Value);
+                        }
+
                         temp = new Route(
                             uri,
                             RouteRole.Proxy,
                             sipHeader.Key,
                             sipHeader.Body,
-                            protocol: protocolSection);
+                            protocol: protocolSection,
+                            additinalMetadata: d?.ToImmutableDictionary());
                     }
 
+                })
+                .When([SipMethods.ContentType])
+                .Then(() =>
+                {
+                    System.Net.Mime.ContentType contentType = new System.Net.Mime.ContentType(sipHeader.Body);
+
+                    temp = new ContentType(sipHeader.Key, sipHeader.Body, contentType);
+                })
+                .When([SipMethods.ContentLength])
+                .Then(() =>
+                {
+                    if (!uint.TryParse(sipHeader.Body, out var length))
+                        return;
+
+                    temp = new ContentLength(sipHeader.Key, length);
                 });
 
             return temp is not null ? Result.Ok(temp) : Result.Fail("Failed to parse header");

@@ -1,4 +1,5 @@
-﻿using Woby.Core.CommonLanguage.Signaling.Core;
+﻿using System.Diagnostics.CodeAnalysis;
+using Woby.Core.CommonLanguage.Signaling.Core;
 
 namespace Woby.Core.Signaling.Sip.Headers
 {
@@ -37,6 +38,9 @@ namespace Woby.Core.Signaling.Sip.Headers
         }
 
         public static bool operator !=(SipHeader left, SipHeader right) => !(left == right);
+
+        [MemberNotNullWhen(true, nameof(Parameters))]
+        public bool HasParamerters() => Parameters is not null && Parameters.Any();
 
         public override bool Equals(object? obj)
         {

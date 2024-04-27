@@ -13,6 +13,9 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
         public static MissingError MissingMaxForward() => new MissingError("Max-Forward", GroupCode, 5, "Message received has missing 'Max-Forward'");
         public static MissingError MissingCallId() => new MissingError("Call-ID", GroupCode, 6, "Message received has missing 'Call-ID'");
         public static MissingError MissingCSeq() => new MissingError("CSeq", GroupCode, 7, "Message received has missing 'CSeq'");
+        public static MissingError MissingContentType() => new MissingError("ContentType", GroupCode, 8, "Message received has missing 'Content-Type'");
+        public static MissingError MissingContentLength() => new MissingError("ContenLength", GroupCode, 9, "Message received has missing 'Conten-Length'");
+
         public static InvalidError CSeqSequenceIsTooLarge() => new InvalidError(GroupCode, 8, "'CSeq' sequence exceeds the limit");
         public static InvalidError CSeqCouldNotBeParsed() => new InvalidError(GroupCode, 9, "'CSeq' could not be parsed");
         public static InvalidError MaxForwardCouldNotBeParsed() => new InvalidError(GroupCode, 10, "'Max-Forward' could not be parsed");

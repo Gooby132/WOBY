@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Woby.Core.CommonLanguage.Signaling.Core;
+﻿using Woby.Core.CommonLanguage.Signaling.Core;
 
 namespace Woby.Core.CommonLanguage.Signaling.ContentMeta
 {
     public class ContentType : SignalingHeader
     {
-        public string? CharacterSet { get; }
+        public System.Net.Mime.ContentType Content { get; }
 
-        public ContentType(string key, string body, string? characterSet, HeaderType type) : base(key, body, type)
+        public ContentType(string key, string body, System.Net.Mime.ContentType content) : base(key, body, HeaderType.ContentMetadata)
         {
-            CharacterSet = characterSet;
+            Content = content;
         }
     }
 }

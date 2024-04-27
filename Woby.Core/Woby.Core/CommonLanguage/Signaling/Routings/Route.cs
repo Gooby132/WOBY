@@ -1,4 +1,5 @@
 ﻿using FluentResults;
+using System.Collections.Immutable;
 using System.Net;
 using Woby.Core.CommonLanguage.Signaling.Core;
 
@@ -24,7 +25,8 @@ namespace Woby.Core.CommonLanguage.Signaling.Routings
             string key,
             string body,
             string? protocol = null,
-            string? displayName = null) : base(key, body, HeaderType.Routing)
+            string? displayName = null,
+            IImmutableDictionary<string, string>? additinalMetadata = null) : base(key, body, HeaderType.Routing, additinalMetadata)
         {
             Uri = uri;
             Role = role;
@@ -32,6 +34,7 @@ namespace Woby.Core.CommonLanguage.Signaling.Routings
             Protocol = protocol;
         }
 
+        public bool HasDisplayName() => !string.IsNullOrEmpty(DisplayName);
         // no equaty required as body and key are compared
     }
 }

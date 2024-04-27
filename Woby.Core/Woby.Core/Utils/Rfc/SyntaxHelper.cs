@@ -22,6 +22,7 @@ namespace Woby.Core.Utils.Rfc
         public static class Primitives
         {
             public static readonly char Quote = (char)34;
+            public static readonly char SipHeaderDelimiter = ';';
             public static readonly char LessThan = '<';
             public static readonly char GreaterThan = '>';
             public static readonly string Crlf = "\r\n";
@@ -37,14 +38,15 @@ namespace Woby.Core.Utils.Rfc
 
         public static class AddressSpecifications
         {
+            public static bool StartsLessThanAndEndsWithGreaterThan(string body) => !body.StartsWith(Primitives.LessThan) || !body.EndsWith(Primitives.GreaterThan);
+
             public static bool TryParseAngleAddr(string body, [NotNullWhen(true)] out string? address)
             {
                 address = null;
 
                 var trimmed = body.Trim(); // remove [CFWS]
 
-                // validate
-                if (!trimmed.StartsWith(Primitives.LessThan) || !trimmed.EndsWith(Primitives.GreaterThan))
+                if (StartsLessThanAndEndsWithGreaterThan(trimmed))
                     return false;
 
                 address = trimmed.Substring(1, trimmed.Length - 2);
@@ -63,14 +65,23 @@ namespace Woby.Core.Utils.Rfc
                     return false;
 
                 if (sections.Length == 1)
-                    return TryParseAngleAddr(sections[0], out address);
+                    if (TryParseAngleAddr(sections[0], out var temp))
+                    {
+                        address = temp;
+                        return true;
+                    }
+                    else
+                    {
+                        address = body;
+                        return true;
+                    }
 
                 displayName = string.Join(' ', sections[0..(sections.Length - 1)]);
                 return TryParseAngleAddr(sections[sections.Length - 1], out address);
             }
 
             public static string CreateNameAddr(string address, string? displayName) => string.Format("\"{0}\" <{1}>", displayName ?? string.Empty, address);
-        
+
         }
 
     }
