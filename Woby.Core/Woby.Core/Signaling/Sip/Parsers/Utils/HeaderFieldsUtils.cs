@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using Woby.Core.Signaling.Sip.Headers;
 
 namespace Woby.Core.Signaling.Sip.Parsers.Utils
@@ -46,6 +47,31 @@ namespace Woby.Core.Signaling.Sip.Parsers.Utils
             headerValue = sections[0];
 
             sipParameters = temp.Any() ? temp : null; // keeping sip parameters null if non found
+
+            return true;
+        }
+
+        public static bool TryParseRequestLine(
+            string headerCompleteValue,
+            [NotNullWhen(true)] out string? method,
+            [NotNullWhen(true)] out Uri? uri,
+            [NotNullWhen(true)] out string? protocol)
+        {
+            method = null;
+            uri = null;
+            protocol = null;
+
+            var sections = headerCompleteValue.Split((char)0x32);
+
+            if (sections.Length != 3)
+                return false;
+
+            method = sections[0]; // first section of request line
+
+            if (!Uri.TryCreate(sections[1], UriKind.RelativeOrAbsolute, out uri))
+                return false;
+
+            protocol = sections[3];
 
             return true;
         }

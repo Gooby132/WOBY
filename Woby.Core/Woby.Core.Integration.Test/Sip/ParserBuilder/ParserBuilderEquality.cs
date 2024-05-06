@@ -19,7 +19,7 @@ namespace Woby.Core.Integration.Test.Sip.ParserBuilder
             ServiceCollection services = new ServiceCollection();
 
             services.AddLogging(conf => conf.AddSerilog());
-            services.AddTransient<SipSignalingHeaderParser>();
+            services.AddTransient<SipHeaderParser>();
             services.AddTransient<SipConverter>();
             services.AddTransient<SipBuilder>();
 
@@ -30,7 +30,7 @@ namespace Woby.Core.Integration.Test.Sip.ParserBuilder
         [TestMethod]
         public void MessageEquality_Successful()
         {
-            var parser = _provider.GetRequiredService<SipSignalingHeaderParser>();
+            var parser = _provider.GetRequiredService<SipHeaderParser>();
             var converter = _provider.GetRequiredService<SipConverter>();
             var builder = _provider.GetRequiredService<SipBuilder>();
 
@@ -44,18 +44,25 @@ namespace Woby.Core.Integration.Test.Sip.ParserBuilder
                 "Content-Type: text/plain\r\n" +
                 "Content-Length: 18\r\n";
 
+            // parse into intemiddiate language
+
             var parsedMessage = parser.Parse(sipMessage);
+
+            // convert into common language
+
             var common = converter.Parse(
                 parsedMessage
                     .Value
-                    .Where(header => header.IsSuccess)
-                    .Select(header => header.Value));
+                    .Headers);
 
             Assert.IsTrue(common.IsSuccess, "common language compilation failed");
+
+            // build into encoded stream
 
             var encodedSip = builder.Build(new CommonLanguage.Messages.MessageBase(common.Value));
 
             Assert.IsTrue(encodedSip.IsSuccess, "could not encode sip message");
+
             var messageAsString = new StreamReader(encodedSip.Value).ReadToEnd();
 
             Assert.AreEqual(sipMessage, messageAsString, "messages are not equal");

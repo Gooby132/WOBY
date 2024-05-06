@@ -12,7 +12,7 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
     {
 
         private ServiceProvider _provider;
-        private SipSignalingHeaderParser _headerParser;
+        private SipHeaderParser _headerParser;
         private SipConverter _specializedParser;
 
         [TestInitialize]
@@ -21,11 +21,11 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
             ServiceCollection services = new ServiceCollection();
 
             services.AddLogging(conf => conf.AddSerilog());
-            services.AddTransient<SipSignalingHeaderParser>();
+            services.AddTransient<SipHeaderParser>();
             services.AddTransient<SipConverter>();
 
             _provider = services.BuildServiceProvider();
-            _headerParser = _provider.GetRequiredService<SipSignalingHeaderParser>();
+            _headerParser = _provider.GetRequiredService<SipHeaderParser>();
             _specializedParser = _provider.GetRequiredService<SipConverter>();
         }
 

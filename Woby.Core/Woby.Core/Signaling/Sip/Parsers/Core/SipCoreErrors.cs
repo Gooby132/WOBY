@@ -21,5 +21,6 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
         public static InvalidError MaxForwardCouldNotBeParsed() => new InvalidError(GroupCode, 10, "'Max-Forward' could not be parsed");
         public static InvalidError GeneralInvalidMessageError(string message) => new InvalidError(GroupCode, 11, $"General invalid error - '{message}'");
         public static InvalidError FailedParsingHeaderParameters() => new InvalidError(GroupCode, 12, $"Failed parsing header parameters");
+        public static InvalidError FailedParsingRequestHeader() => new InvalidError(GroupCode, 13, $"Failed parsing request header");
     }
 }

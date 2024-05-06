@@ -26,7 +26,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Abstractions\Builders\Clients\" />
+	  <Folder Include="Signaling\Sip\DependecyInjection\" />
 	</ItemGroup>
 	
 </Project>

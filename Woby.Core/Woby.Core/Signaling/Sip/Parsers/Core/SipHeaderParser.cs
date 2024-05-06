@@ -1,8 +1,10 @@
 ﻿using FluentResults;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using Woby.Core.Abstractions;
 using Woby.Core.CommonLanguage.Signaling.Core;
 using Woby.Core.Signaling.Sip.Headers;
+using Woby.Core.Signaling.Sip.Messages;
 using Woby.Core.Signaling.Sip.Parsers.Utils;
 
 namespace Woby.Core.Signaling.Sip.Parsers.Core
@@ -37,30 +39,37 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
      *     treated in its unfolded form for further syntactic and semantic
      *     evaluation.
      */
-    public class SipSignalingHeaderParser
+    public class SipHeaderParser : IParser<SipMessage>
     {
 
         #region Fields
 
-        private readonly ILogger<SipSignalingHeaderParser> _logger;
+        private readonly ILogger<SipHeaderParser> _logger;
 
         #endregion
 
         #region Properties
 
-        public string Name { get; set; } = nameof(SipSignalingHeaderParser);
+        public string Name { get; set; } = nameof(SipHeaderParser);
 
         #endregion
 
-        public SipSignalingHeaderParser(ILogger<SipSignalingHeaderParser> logger)
+        public SipHeaderParser(ILogger<SipHeaderParser> logger)
         {
             _logger = logger;
         }
 
-        public Result<IEnumerable<Result<SipHeader>>> Parse(string headers)
+        public Result<SipMessage> Parse(string headers)
         {
 
             StringReader reader = new StringReader(headers);
+
+            var requestHeaderAsString = reader.ReadLine();
+
+            var requestLineHeader = ParseRequestHeader(requestHeaderAsString);
+
+            if (requestLineHeader.IsFailed)
+                return Result.Fail(requestLineHeader.Errors);
 
             var parsedHeadersAsStrings = ParseFoldingHeaders(reader);
 
@@ -78,13 +87,32 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
                 .Value
                 .Select(ParseSingleHeader);
 
-            var errors = sipHeaders
-                .Where(header => header.IsFailed)
-                .SelectMany(header => header.Errors);
-
             return Result
-                .Ok(sipHeaders)
-                .WithErrors(errors); // TODO : add a validation of headers that deems to be neccesery 
+                .Ok(new SipMessage(
+                    requestLineHeader.Value,
+                    sipHeaders.Where(header => header.IsSuccess).Select(header => header.Value),
+                    sipHeaders.Where(header => header.IsFailed)
+                    )); // TODO : add a validation of headers that deems to be neccesery 
+        }
+
+        public Result<SipRequestLineHeader> ParseRequestHeader(string? requestLineAsString)
+        {
+
+            if (string.IsNullOrWhiteSpace(requestLineAsString))
+            {
+                return Result.Fail(SipCoreErrors.FailedParsingRequestHeader());
+            }
+
+            if (!HeaderFieldsUtils.TryParseRequestLine(requestLineAsString, out var method, out var uri, out var protocol))
+            {
+                return Result.Fail(SipCoreErrors.FailedParsingRequestHeader());
+            }
+
+            return Result.Ok(new SipRequestLineHeader(
+                    SipMethods.GetType(method), 
+                    uri, 
+                    protocol
+                ));
         }
 
         public Result<SipHeader> ParseSingleHeader(string header)
@@ -137,8 +165,6 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
 
             return Result.Ok<IEnumerable<string>>(headers);
         }
-
-
 
     }
 }

@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-namespace Woby.Core.CommonLanguage.Messages
+﻿namespace Woby.Core.CommonLanguage.Messages
 {
     public class MessageBase
     {

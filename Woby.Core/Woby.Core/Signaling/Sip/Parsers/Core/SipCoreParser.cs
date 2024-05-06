@@ -16,7 +16,7 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
         #region Fields
 
         private readonly ILogger<SipCoreParser> _logger;
-        private readonly SipSignalingHeaderParser _sipHeaderParser;
+        private readonly SipHeaderParser _sipHeaderParser;
         private readonly SipConverter _sipConverter;
 
         #endregion
@@ -35,7 +35,7 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
         #region Constructor
         public SipCoreParser(
             ILogger<SipCoreParser> logger,
-            SipSignalingHeaderParser sipHeaderParser,
+            SipHeaderParser sipHeaderParser,
             SipConverter sipSpecializedHeaderParser)
         {
             _logger = logger;
@@ -60,7 +60,7 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
             }
 
             // log header warnings
-            foreach (var header in sipHeaders.Value)
+            foreach (var header in sipHeaders.Value.FailedHeaders)
             {
                 if (header.IsFailed)
                 {
@@ -70,10 +70,7 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
             }
 
             var section = _sipConverter.Parse(
-                sipHeaders
-                    .Value
-                    .Where(header => header.IsSuccess)
-                    .Select(header => header.Value));
+                sipHeaders.Value.Headers);
 
             if (section.IsFailed)
             {
