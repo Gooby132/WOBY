@@ -23,6 +23,11 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Woby.Core\Woby.Core.csproj" />
+		<ProjectReference Include="..\Woby.Sip\Woby.Sip.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Sagas\" />
 	</ItemGroup>
 
 </Project>

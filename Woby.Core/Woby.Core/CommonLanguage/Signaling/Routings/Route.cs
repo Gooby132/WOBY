@@ -18,8 +18,9 @@ namespace Woby.Core.CommonLanguage.Signaling.Routings
         public RouteRole Role { get; }
         public string? DisplayName { get; }
         public string? Protocol { get; }
+        public string? Tag { get; }
 
-        internal Route(
+        public Route(
             Uri uri,
             RouteRole role,
             string key,
@@ -32,6 +33,7 @@ namespace Woby.Core.CommonLanguage.Signaling.Routings
             Role = role;
             DisplayName = displayName;
             Protocol = protocol;
+            Tag = additinalMetadata?.GetValueOrDefault("tag");
         }
 
         public bool HasDisplayName() => !string.IsNullOrEmpty(DisplayName);

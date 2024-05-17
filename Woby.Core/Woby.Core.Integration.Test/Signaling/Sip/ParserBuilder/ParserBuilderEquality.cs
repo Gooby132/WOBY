@@ -1,12 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using System.Text;
 using Woby.Core.Signaling.Sip.Builder;
 using Woby.Core.Signaling.Sip.Converters;
-using Woby.Core.Signaling.Sip.Headers;
 using Woby.Core.Signaling.Sip.Parsers.Core;
 
-namespace Woby.Core.Integration.Test.Sip.ParserBuilder
+namespace Woby.Core.Integration.Test.Signaling.Sip.ParserBuilder
 {
     [TestClass]
     public class ParserBuilderEquality
@@ -35,6 +33,7 @@ namespace Woby.Core.Integration.Test.Sip.ParserBuilder
             var builder = _provider.GetRequiredService<SipBuilder>();
 
             string sipMessage =
+                "INVITE sip:user2@domain.com SIP/2.0\r\n" +
                 "Via: SIP/2.0/TCP user1pc.domain.com;branch=z9hG4bK776sgdkse\r\n" +
                 "Max-Forwards: 70\r\n" +
                 "From: sip:user1@domain.com;tag=49583\r\n" +
@@ -50,16 +49,19 @@ namespace Woby.Core.Integration.Test.Sip.ParserBuilder
 
             // convert into common language
 
-            var common = converter.Parse(
+            var common = converter.Convert(
                 parsedMessage
-                    .Value
-                    .Headers);
+                    .Value);
 
             Assert.IsTrue(common.IsSuccess, "common language compilation failed");
 
             // build into encoded stream
 
-            var encodedSip = builder.Build(new CommonLanguage.Messages.MessageBase(common.Value));
+            var encodedSip = builder.Build(new CommonLanguage.Messages.MessageBase 
+            { 
+                Signaling = common.Value,
+                Content = null
+            });
 
             Assert.IsTrue(encodedSip.IsSuccess, "could not encode sip message");
 

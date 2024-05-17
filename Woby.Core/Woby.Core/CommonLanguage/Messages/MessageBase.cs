@@ -3,14 +3,29 @@
     public class MessageBase
     {
 
-        public SignalingSection Signaling { get; }
-        public ContentSection? Content { get; }
+        public required SignalingSection Signaling { get; init; }
+        public required ContentSection? Content { get; init; }
 
-        public MessageBase(SignalingSection signaling, ContentSection? content = null)
+        public static NoMessage NoMessage(SignalingSection signaling) => new NoMessage() 
+        { 
+            Signaling = signaling,
+            Content = null,
+        };
+
+        public static EndOfTransaction EndOfTransaction() => new EndOfTransaction()
         {
-            Signaling = signaling;
-            Content = content;
-        }
+            Signaling = null!,
+            Content = null,
+        };
+    }
 
+    public class NoMessage : MessageBase
+    {
+        public NoMessage() : base() { }
+    }
+
+    public class EndOfTransaction : MessageBase
+    {
+        public EndOfTransaction() : base() { }
     }
 }

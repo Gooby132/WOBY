@@ -19,5 +19,7 @@ namespace Woby.Core.CommonLanguage.Signaling.Identities
             Sequence = (int)sequence;
             Method = method;
         }
+
+        public SequenceHeader Increment() => new SequenceHeader(Key, (uint)Sequence, Method, Body); // Body and method incements
     }
 }

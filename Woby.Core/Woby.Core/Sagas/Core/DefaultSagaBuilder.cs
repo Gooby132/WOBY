@@ -2,6 +2,8 @@
 using Woby.Core.Abstractions;
 using Woby.Core.Network.Abstractions;
 using Woby.Core.Sagas.Errors;
+using Woby.Core.Sagas.Clients;
+using Woby.Core.Commons.Errors;
 
 namespace Woby.Core.Sagas.Core
 {
@@ -10,7 +12,7 @@ namespace Woby.Core.Sagas.Core
 
         private readonly IServiceProvider _provider;
 
-        private Type? _client;
+        private SagaClientBase? _client;
         private Type? _builder;
         private Type? _converter;
         private Type? _parser;
@@ -22,9 +24,9 @@ namespace Woby.Core.Sagas.Core
             _provider = provider;
         }
 
-        public ISagaBuilder<InputMessage> AddClient<Client>() where Client : IClient
+        public ISagaBuilder<InputMessage> AddClient(SagaClientBase sagaClient) 
         {
-            _client = typeof(Client);
+            _client = sagaClient;
             return this;
         }
 
@@ -62,25 +64,25 @@ namespace Woby.Core.Sagas.Core
             return this;
         }
         
-        public Result<ISaga<InputMessage>> Build()
+        public Result<ISaga<InputMessage>> BuildSaga()
         {
             if (_client is null)
-                return Result.Fail(SagaBuilderErrors.ClientWasNotProvided());
+                return Result.Fail(SagaErrors.ClientWasNotProvided());
 
             if(_builder is null)
-                return Result.Fail(SagaBuilderErrors.BuilderWasNotProvided());
+                return Result.Fail(SagaErrors.BuilderTypeWasNotProvided());
             
             if(_receiver is null)
-                return Result.Fail(SagaBuilderErrors.ReceiverWasNotProvided());
+                return Result.Fail(SagaErrors.ReceiverWasNotProvided());
             
             if(_converter is null)
-                return Result.Fail(SagaBuilderErrors.ConverterWasNotProvided());
+                return Result.Fail(SagaErrors.ConverterTypeWasNotProvided());
 
             if (_transmitter is null)
-                return Result.Fail(SagaBuilderErrors.TransmitterWasNotProvided());
+                return Result.Fail(SagaErrors.TransmitterWasNotProvided());
 
             if (_parser is null)
-                return Result.Fail(SagaBuilderErrors.ParserWasNotProvided());
+                return Result.Fail(SagaErrors.ParserTypeWasNotProvided());
 
             var saga = new DefaultSaga<InputMessage>(
                 _provider,
@@ -95,6 +97,8 @@ namespace Woby.Core.Sagas.Core
                 null,
                 null
                 );
+
+            _client.SetSagaTransmittor(saga);
 
             return saga;
         }

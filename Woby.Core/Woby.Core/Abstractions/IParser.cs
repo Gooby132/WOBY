@@ -1,6 +1,6 @@
 ﻿using FluentResults;
 
-namespace Woby.Core.Abstractions
+namespace Woby.Core.Commons.Errors
 {
     public interface IParser<ProtocolMessageBase>
     {

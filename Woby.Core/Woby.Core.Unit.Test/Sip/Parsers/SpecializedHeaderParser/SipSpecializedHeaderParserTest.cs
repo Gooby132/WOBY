@@ -32,11 +32,11 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
         [TestMethod]
         public void ParseSpecializedHeader_From_Successful()
         {
-            string test1 = "To: \"Bob\" sip:bob@example.net";
-            string test2 = "To: sip:bob@example.net;tag=98765";
-            string test3 = "To: sip:bob@example.net;tag=zyxwv";
-            string test4 = "To: \"Bob\" sip:bob@example.net;tag=54321";
-            string test5 = "To: \"Bob\" sip:bob@example.net;tag=78901";
+            string test1 = "From: \"Bob\" <sip:bob@example.net>";
+            string test2 = "From: sip:bob@example.net;tag=98765";
+            string test3 = "From: sip:bob@example.net;tag=zyxwv";
+            string test4 = "From: \"Bob\" <sip:bob@example.net;tag=54321>"; // route has its own parameters which needs to be supported
+            string test5 = "From: \"Bob\" <sip:bob@example.net;tag=78901>";
 
             var header1 = _headerParser.ParseSingleHeader(test1);
             var header2 = _headerParser.ParseSingleHeader(test2);
@@ -44,30 +44,30 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
             var header4 = _headerParser.ParseSingleHeader(test4);
             var header5 = _headerParser.ParseSingleHeader(test5);
 
-            var res1 = _specializedParser.Parse(header1.Value);
-            var res2 = _specializedParser.Parse(header2.Value);
-            var res3 = _specializedParser.Parse(header3.Value);
-            var res4 = _specializedParser.Parse(header4.Value);
-            var res5 = _specializedParser.Parse(header5.Value);
+            var res1 = _specializedParser.ConvertHeader(header1.Value);
+            var res2 = _specializedParser.ConvertHeader(header2.Value);
+            var res3 = _specializedParser.ConvertHeader(header3.Value);
+            var res4 = _specializedParser.ConvertHeader(header4.Value);
+            var res5 = _specializedParser.ConvertHeader(header5.Value);
 
-            SipHeader expectedHeader1 = new SipHeader("To", "\"Bob\" sip:bob@example.net", HeaderType.Unknown);
+            SipHeader expectedHeader1 = new SipHeader("From", "\"Bob\" sip:bob@example.net", HeaderType.Unknown);
 
-            SipHeader expectedHeader2 = new SipHeader("To", "sip:bob@example.net", HeaderType.Unknown, new List<SipParameter>
+            SipHeader expectedHeader2 = new SipHeader("From", "sip:bob@example.net", HeaderType.Unknown, new List<SipParameter>
             {
                 new SipParameter("tag", "98765")
             });
 
-            SipHeader expectedHeader3 = new SipHeader("To", "sip:bob@example.net", HeaderType.Unknown, new List<SipParameter>
+            SipHeader expectedHeader3 = new SipHeader("From", "sip:bob@example.net", HeaderType.Unknown, new List<SipParameter>
             {
                 new SipParameter("tag", "zyxwv")
             });
 
-            SipHeader expectedHeader4 = new SipHeader("To", "\"Bob\" sip:bob@example.net", HeaderType.Unknown, new List<SipParameter>
+            SipHeader expectedHeader4 = new SipHeader("From", "\"Bob\" <sip:bob@example.net>", HeaderType.Unknown, new List<SipParameter>
             {
                 new SipParameter("tag", "54321")
             });
 
-            SipHeader expectedHeader5 = new SipHeader("To", "\"Bob\" sip:bob@example.net", HeaderType.Unknown, new List<SipParameter>
+            SipHeader expectedHeader5 = new SipHeader("From", "\"Bob\" <sip:bob@example.net>", HeaderType.Unknown, new List<SipParameter>
             {
                 new SipParameter("tag", "78901")
             });

@@ -2,21 +2,21 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Woby.Core.Abstractions;
-using Woby.Core.Clients;
 using Woby.Core.CommonLanguage.Messages;
 using Woby.Core.Commons.Errors;
 using Woby.Core.Network.Abstractions;
+using Woby.Core.Sagas.Clients;
 
 namespace Woby.Core.Sagas.Core
 {
-    internal class DefaultSaga<InputMessage> : ISaga<InputMessage>
+    internal class DefaultSaga<InputMessage> : ISaga<InputMessage>, ISagaTransmitter
     {
         private readonly IServiceProvider _provider;
         private readonly ILogger<DefaultSaga<InputMessage>> _logger;
         private readonly Type _builder;
         private readonly Type _converterType;
         private readonly Type _parserType;
-        private readonly Type _clientType;
+        private readonly SagaClientBase _client;
         private readonly IChannel _receiver;
         private readonly IChannel _transmitter;
         private readonly Action<IEnumerable<ErrorBase>>? _parserErrorsCallback;
@@ -29,7 +29,7 @@ namespace Woby.Core.Sagas.Core
             Type builder, 
             Type converter,
             Type parser,
-            Type client,
+            SagaClientBase client,
             IChannel receiver, 
             IChannel transmitter,
             Action<IEnumerable<ErrorBase>>? parserErrorsCallback,
@@ -41,14 +41,13 @@ namespace Woby.Core.Sagas.Core
             _provider = provider;
             _logger = (provider
                 .GetRequiredService(typeof(ILogger<>)
-                    .MakeGenericType(typeof(ILogger<>)
-                        .MakeGenericType(typeof(DefaultSaga<>)
-                            .MakeGenericType(typeof(InputMessage))))) as ILogger<DefaultSaga<InputMessage>>)!;
+                    .MakeGenericType(typeof(DefaultSaga<>)
+                        .MakeGenericType(typeof(InputMessage)))) as ILogger<DefaultSaga<InputMessage>>)!;
 
             _builder = builder;
             _converterType = converter;
             _parserType = parser;
-            _clientType = client;
+            _client = client;
             _receiver = receiver;
             _transmitter = transmitter;
             _parserErrorsCallback = parserErrorsCallback;
@@ -83,36 +82,40 @@ namespace Woby.Core.Sagas.Core
                 return;
             }
 
-            var client = (_provider.GetRequiredService(_clientType) as ClientBase)!;
-
             if (common.Value is ResponseBase response)
-                client.GetResponse(response);
+                await _client.GetResponse().Invoke(response);
             else if(common.Value is RequestBase request)
-                client.GetRequest(request);
-            else
-                client.GetGeneralMessage(common.Value);
-
-            var builder = (_provider.GetRequiredService(_builder) as IBuilder)!;
-
-            var outputStream = await builder.Build(common.Value);
-
-            if (outputStream.IsFailed)
-            {
-                _builderErrorsCallback?.Invoke(outputStream.Errors.Select(e => (e as ErrorBase)!));
-                return;
-            }
-
-            var trasmissionResult = await _transmitter.Transmit(outputStream.Value);
-
-            if(trasmissionResult.IsFailed)
-            {
-                _transmissionErrorsCallback?.Invoke(trasmissionResult.Errors.Select(e => (e as ErrorBase)!));
-                return;
-            }
+                await _client.GetRequest().Invoke(request);
         }
 
         public Result Start() => _receiver.Subscribe(this);
 
         public Result End() => _receiver.Unsubscribe(this);
+
+        public async Task<Result> SendMessage(MessageBase message)
+        {
+            if (message is NoMessage)
+                return Result.Ok();
+
+            var builder = (_provider.GetRequiredService(_builder) as IBuilder)!;
+
+            var outputStream = await builder.Build(message);
+
+            if (outputStream.IsFailed)
+            {
+                _builderErrorsCallback?.Invoke(outputStream.Errors.Select(e => (e as ErrorBase)!));
+                return Result.Fail(outputStream.Errors);
+            }
+
+            var trasmissionResult = await _transmitter.Transmit(outputStream.Value);
+
+            if (trasmissionResult.IsFailed)
+            {
+                _transmissionErrorsCallback?.Invoke(trasmissionResult.Errors.Select(e => (e as ErrorBase)!));
+                return Result.Fail(trasmissionResult.Errors);
+            }
+
+            return Result.Ok();
+        }
     }
 }

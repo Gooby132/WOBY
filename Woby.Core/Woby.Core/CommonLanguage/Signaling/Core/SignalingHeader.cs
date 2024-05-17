@@ -21,6 +21,10 @@ namespace Woby.Core.CommonLanguage.Signaling.Core
         [MemberNotNullWhen(true, nameof(AdditinalMetadata))]
         public bool HasAdditinalMetadata() => AdditinalMetadata is not null && AdditinalMetadata.Any();
 
+        public string? HasAdditinalMetadata(string key) => !HasAdditinalMetadata() ?
+            null :
+            AdditinalMetadata.FirstOrDefault(meta => meta.Key == key).Value;
+
         public static bool operator ==(SignalingHeader left, SignalingHeader right) =>
             left.Type == right.Type &&
             left.Key == right.Key &&
