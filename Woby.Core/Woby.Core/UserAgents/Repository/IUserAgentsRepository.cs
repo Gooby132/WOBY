@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 using Woby.Core.Signaling.UserAgents.ValueObjects;
+using Woby.Core.UserAgents;
 
 namespace Woby.Core.Signaling.UserAgents.Repository
 {

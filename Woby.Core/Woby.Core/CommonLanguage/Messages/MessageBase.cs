@@ -17,15 +17,17 @@
             Signaling = null!,
             Content = null,
         };
+
+        public static UserAgentNotFound UserAgentNotFound(SignalingSection signaling) => new UserAgentNotFound()
+        {
+            Signaling = signaling,
+            Content = null,
+        };
     }
 
-    public class NoMessage : MessageBase
-    {
-        public NoMessage() : base() { }
-    }
+    public class NoMessage : MessageBase { }
 
-    public class EndOfTransaction : MessageBase
-    {
-        public EndOfTransaction() : base() { }
-    }
+    public class EndOfTransaction : MessageBase { }
+
+    public class UserAgentNotFound: MessageBase { }
 }

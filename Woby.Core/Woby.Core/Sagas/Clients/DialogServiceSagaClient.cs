@@ -3,9 +3,9 @@ using Microsoft.Extensions.Logging;
 using Woby.Core.CommonLanguage.Messages;
 using Woby.Core.CommonLanguage.Signaling.Roles;
 using Woby.Core.Commons.Errors;
-using Woby.Core.Signaling.UserAgents;
 using Woby.Core.Signaling.UserAgents.Repository;
 using Woby.Core.Signaling.UserAgents.ValueObjects;
+using Woby.Core.UserAgents;
 
 namespace Woby.Core.Sagas.Clients
 {
@@ -50,7 +50,7 @@ namespace Woby.Core.Sagas.Clients
                 {
                     _logger.LogWarning("{this} request was made to an unknown user agent - '{id}'", this, userAgentId);
 
-                    return await SendMessage(MessageBase.EndOfTransaction());
+                    return await SendMessage(MessageBase.UserAgentNotFound(request.Signaling));
                 }
 
                 _logger.LogError("{this} request made to user agent - '{userAgent}' failed. error(s) - '{errors}'",

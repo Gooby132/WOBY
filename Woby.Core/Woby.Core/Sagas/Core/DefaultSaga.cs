@@ -62,7 +62,7 @@ namespace Woby.Core.Sagas.Core
 
             var message = await reader.ReadToEndAsync();
 
-            var parser = (_provider.GetRequiredService(_parserType) as IParser<InputMessage>)!;
+            var parser = (_provider.GetRequiredService(_parserType) as IParser<InputMessage>);
 
             var parsed = parser.Parse(message);
 
@@ -72,7 +72,7 @@ namespace Woby.Core.Sagas.Core
                 return;
             }
 
-            var converter = (_provider.GetRequiredService(_converterType) as IConverter<InputMessage>)!;
+            var converter = (_provider.GetRequiredService(_converterType) as ISignalingConverter<InputMessage>)!;
 
             var common = converter.Convert(parsed.Value);
             
@@ -82,10 +82,18 @@ namespace Woby.Core.Sagas.Core
                 return;
             }
 
-            if (common.Value is ResponseBase response)
-                await _client.GetResponse().Invoke(response);
-            else if(common.Value is RequestBase request)
-                await _client.GetRequest().Invoke(request);
+            if (!common.Value.Role.IsRequestOrResponse)
+                await _client.GetResponse().Invoke(new ResponseBase()
+                {
+                    Signaling = common.Value,
+                    Content = null
+                });
+            else
+                await _client.GetRequest().Invoke(new RequestBase()
+                {
+                    Signaling = common.Value,
+                    Content = null
+                });
         }
 
         public Result Start() => _receiver.Subscribe(this);
@@ -99,7 +107,16 @@ namespace Woby.Core.Sagas.Core
 
             var builder = (_provider.GetRequiredService(_builder) as IBuilder)!;
 
-            var outputStream = await builder.Build(message);
+            Result<Stream> outputStream = Result.Fail("Unknown response");
+            if (message is UserAgentNotFound)
+            {
+                outputStream = await builder.BuildUserAgentWasNotFound(message);
+            }
+
+            if(message is ResponseBase response)
+            {
+                outputStream = await builder.Build(response);
+            }
 
             if (outputStream.IsFailed)
             {

@@ -79,7 +79,6 @@ namespace Woby.Core.Utils.Rfc
                 displayName = string.Join(' ', sections[0..(sections.Length - 1)]);
                 return TryParseAngleAddr(sections[sections.Length - 1], out address);
             }
-
             public static string CreateNameAddr(string address, string? displayName) => string.Format("\"{0}\" <{1}>", displayName ?? string.Empty, address);
 
         }

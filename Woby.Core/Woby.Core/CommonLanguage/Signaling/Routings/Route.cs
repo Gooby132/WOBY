@@ -1,7 +1,10 @@
 ﻿using FluentResults;
+using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Immutable;
 using System.Net;
 using Woby.Core.CommonLanguage.Signaling.Core;
+using Woby.Core.Network.Core;
 
 namespace Woby.Core.CommonLanguage.Signaling.Routings
 {
@@ -14,29 +17,46 @@ namespace Woby.Core.CommonLanguage.Signaling.Routings
     /// </summary>
     public class Route : SignalingHeader
     {
-        public Uri Uri { get; }
         public RouteRole Role { get; }
+        public NetworkProtocol NetworkProtocol { get; }
         public string? DisplayName { get; }
-        public string? Protocol { get; }
+        public string Protocol { get; }
+        public string? User { get; }
+        public string? Password { get; }
+        public string Host { get; }
+        public int? Port { get; }
         public string? Tag { get; }
 
         public Route(
-            Uri uri,
             RouteRole role,
             string key,
             string body,
-            string? protocol = null,
-            string? displayName = null,
+            string? displayName,
+            string protocol,
+            string? user,
+            string? password,
+            string host,
+            int? port,
+            NetworkProtocol? networkProtocol,
             IImmutableDictionary<string, string>? additinalMetadata = null) : base(key, body, HeaderType.Routing, additinalMetadata)
         {
-            Uri = uri;
             Role = role;
             DisplayName = displayName;
             Protocol = protocol;
+            User = user;
+            Password = password;
+            Host = host;
+            Port = port;
+            NetworkProtocol = networkProtocol ?? NetworkProtocol.Unknown;
             Tag = additinalMetadata?.GetValueOrDefault("tag");
         }
 
         public bool HasDisplayName() => !string.IsNullOrEmpty(DisplayName);
-        // no equaty required as body and key are compared
+
+        public bool HasUser() => !string.IsNullOrEmpty(User);
+        public bool HasPassword() => !string.IsNullOrEmpty(Password);
+        public bool ContainsUserInfo() => !string.IsNullOrEmpty(User) || !string.IsNullOrEmpty(Password);
+        public bool HasPort() => Port.HasValue;
+
     }
 }

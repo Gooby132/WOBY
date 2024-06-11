@@ -9,6 +9,7 @@ namespace Woby.Sip.Signaling.Sip.Converters
         public static readonly SipMessageMethod Invite = new SipMessageMethod("INVITE", 1);
         public static readonly SipMessageMethod Bye = new SipMessageMethod("BYE", 2);
         public static readonly SipMessageMethod Ok = new SipMessageMethod("OK", 3);
+        public static readonly SipMessageMethod NotFound = new SipMessageMethod("Not Found", 404);
 
         private SipMessageMethod(string name, int value) : base(name, value)
         {
@@ -21,5 +22,7 @@ namespace Woby.Sip.Signaling.Sip.Converters
 
             return None;
         }
+
+        public override string ToString() => $"{NotFound.Value} {NotFound.Name}";
     }
 }

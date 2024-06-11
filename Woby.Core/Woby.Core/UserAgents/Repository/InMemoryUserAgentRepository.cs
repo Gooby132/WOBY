@@ -2,6 +2,7 @@
 using Woby.Core.Commons.Errors;
 using Woby.Core.Signaling.UserAgents.ValueObjects;
 using Woby.Core.Signaling.UserAgents.Errors;
+using Woby.Core.UserAgents;
 
 namespace Woby.Core.Signaling.UserAgents.Repository
 {

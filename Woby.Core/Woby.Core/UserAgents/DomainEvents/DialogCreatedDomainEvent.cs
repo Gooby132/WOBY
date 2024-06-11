@@ -1,7 +1,7 @@
 ﻿using Woby.Core.CommonLanguage.Messages;
 using Woby.Core.CommonLanguage.Signaling.Identities;
-using Woby.Core.Signaling.UserAgents;
 using Woby.Core.Signaling.Primitives;
+using Woby.Core.UserAgents;
 
 namespace Woby.Core.Signaling.UserAgents.DomainEvents
 {

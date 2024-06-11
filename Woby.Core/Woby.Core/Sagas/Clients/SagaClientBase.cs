@@ -13,13 +13,23 @@ namespace Woby.Core.Sagas.Clients
     public abstract class SagaClientBase
     {
 
+        #region Fields
+
         private ILogger<SagaClientBase>? _logger;
         private ISagaTransmitter? _transmittor;
 
+        #endregion
+
+        #region Constructor
+        
         public SagaClientBase()
         {
         }
 
+        #endregion
+
+        #region Methods
+        
         public void SetLogger(ILogger<SagaClientBase> logger)
         {
             _logger = logger;
@@ -48,6 +58,8 @@ namespace Woby.Core.Sagas.Clients
         public abstract Func<ResponseBase, Task<Result>> GetResponse();
 
         public override string ToString() => nameof(SagaClientBase);
+
+        #endregion
 
     }
 }

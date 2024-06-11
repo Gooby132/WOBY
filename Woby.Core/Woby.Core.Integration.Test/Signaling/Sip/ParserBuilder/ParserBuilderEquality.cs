@@ -26,7 +26,7 @@ namespace Woby.Core.Integration.Test.Signaling.Sip.ParserBuilder
 
 
         [TestMethod]
-        public void MessageEquality_Successful()
+        public async void MessageEquality_Successful()
         {
             var parser = _provider.GetRequiredService<SipHeaderParser>();
             var converter = _provider.GetRequiredService<SipConverter>();
@@ -57,15 +57,15 @@ namespace Woby.Core.Integration.Test.Signaling.Sip.ParserBuilder
 
             // build into encoded stream
 
-            var encodedSip = builder.Build(new CommonLanguage.Messages.MessageBase 
-            { 
+            var encodedSip = builder.Build(new CommonLanguage.Messages.MessageBase
+            {
                 Signaling = common.Value,
                 Content = null
             });
 
-            Assert.IsTrue(encodedSip.IsSuccess, "could not encode sip message");
+            Assert.IsTrue((await encodedSip).IsSuccess, "could not encode sip message");
 
-            var messageAsString = new StreamReader(encodedSip.Value).ReadToEnd();
+            var messageAsString = new StreamReader((await encodedSip).Value).ReadToEnd();
 
             Assert.AreEqual(sipMessage, messageAsString, "messages are not equal");
 

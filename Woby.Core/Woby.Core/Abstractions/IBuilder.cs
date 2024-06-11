@@ -7,6 +7,6 @@ namespace Woby.Core.Abstractions
     {
 
         public Task<Result<Stream>> Build(MessageBase messageBase);
-
+        Task<Result<Stream>> BuildUserAgentWasNotFound(MessageBase message);
     }
 }

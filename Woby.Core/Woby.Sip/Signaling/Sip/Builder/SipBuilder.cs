@@ -1,6 +1,7 @@
 ﻿using FluentResults;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using Woby.Core.Abstractions;
 using Woby.Core.CommonLanguage.Messages;
 using Woby.Core.Commons.Errors;
 using Woby.Core.Utils.Rfc;
@@ -9,7 +10,7 @@ using Woby.Sip.Signaling.Sip.Converters;
 
 namespace Woby.Core.Signaling.Sip.Builder
 {
-    public class SipBuilder
+    public class SipBuilder : IBuilder
     {
         public readonly string SipVersionAndProtocol = "SIP/2.0";
 
@@ -22,7 +23,7 @@ namespace Woby.Core.Signaling.Sip.Builder
             _logger = logger;
         }
 
-        public Result<Stream> Build(MessageBase message)
+        public Task<Result<Stream>> Build(MessageBase message)
         {
 
             var signaling = message.Signaling;
@@ -36,75 +37,49 @@ namespace Woby.Core.Signaling.Sip.Builder
                 _logger.LogWarning("{this} message role - '{message}' is not supported by SIP",
                     this, signaling.Role);
 
-                return Result.Fail(new NotImplementedErrorBase(1, string.Format("{0} message role - '{1}' is not supported by SIP", this, signaling.Role)));
+                return Task.FromResult(
+                    Result.Fail<Stream>(new NotImplementedErrorBase(1, string.Format("{0} message role - '{1}' is not supported by SIP", this, signaling.Role)))
+                    );
             }
 
             builder
                 .Append(method.Name)
                 .Append(" ")
-                .Append(signaling.To.Uri.ToString())
+                .AppendNameAddr(signaling.To)
                 .Append(" ")
                 .Append(SipVersionAndProtocol)
                 .Append(SyntaxHelper.Primitives.Crlf);
 
             // add proxies
             foreach (var proxy in signaling.Proxies)
-            {
-                builder
-                    .Append(SipHeaderMethods.Via.Key)
-                    .Append(": ")
-                    .Append(proxy.Protocol)
-                    .Append(' ')
-                    .AppendRoute(proxy);
-
-                if (proxy.HasAdditinalMetadata())
-                    builder.AppendMetadata(proxy.AdditinalMetadata);
-
-                builder.Append(SyntaxHelper.Primitives.Crlf);
-            }
+                builder.AppendVia(proxy);
 
             // add forwards
             if (signaling.MaxForwardings is not null)
                 builder
-                    .Append(SipHeaderMethods.MaxForwards.Key)
+                    .Append(SipHeaderMethod.MaxForwards.Key)
                     .Append(": ")
                     .Append(signaling.MaxForwardings.MaxForwards)
                     .Append(SyntaxHelper.Primitives.Crlf);
 
             // add from
             builder
-                .Append(SipHeaderMethods.From.Key)
-                .Append(": ")
-                .AppendRoute(signaling.From);
-
-            if (signaling.From.HasAdditinalMetadata())
-                builder.AppendMetadata(signaling.From.AdditinalMetadata);
-
-            builder
-                .Append(SyntaxHelper.Primitives.Crlf);
+                .AppendContact(signaling.From, SipHeaderMethod.From);
 
             // add to
             builder
-                .Append(SipHeaderMethods.To.Key)
-                .Append(": ")
-                .AppendRoute(signaling.To);
-
-            if (signaling.To.HasAdditinalMetadata())
-                builder.AppendMetadata(signaling.To.AdditinalMetadata);
-
-            builder
-                .Append(SyntaxHelper.Primitives.Crlf);
+                .AppendContact(signaling.To, SipHeaderMethod.To);
 
             // add call-id
             builder
-                .Append(SipHeaderMethods.CallId.Key)
+                .Append(SipHeaderMethod.CallId.Key)
                 .Append(": ")
                 .Append(signaling.NegitiationId.Id)
                 .Append(SyntaxHelper.Primitives.Crlf);
 
             // add sequence
             builder
-                .Append(SipHeaderMethods.CSeq.Key)
+                .Append(SipHeaderMethod.CSeq.Key)
                 .Append(": ")
                 .Append(signaling.Sequence.Sequence)
                 .Append(' ')
@@ -114,7 +89,7 @@ namespace Woby.Core.Signaling.Sip.Builder
             // add content type
             if (signaling.ContentType is not null)
                 builder
-                    .Append(SipHeaderMethods.ContentType.Key)
+                    .Append(SipHeaderMethod.ContentType.Key)
                     .Append(": ")
                     .Append(signaling.ContentType.Content.ToString())
                     .Append(SyntaxHelper.Primitives.Crlf);
@@ -122,13 +97,50 @@ namespace Woby.Core.Signaling.Sip.Builder
             // add content length
             if (signaling.ContentLength is not null)
                 builder
-                    .Append(SipHeaderMethods.ContentLength.Key)
+                    .Append(SipHeaderMethod.ContentLength.Key)
                     .Append(": ")
                     .Append(signaling.ContentLength.Length)
                     .Append(SyntaxHelper.Primitives.Crlf);
 
-            return new MemoryStream(
-                Encoding.UTF8.GetBytes(builder.ToString()));
+            return Task.FromResult(
+               Result.Ok<Stream>(new MemoryStream(Encoding.UTF8.GetBytes(builder.ToString()))));
+        }
+
+        public Task<Result<Stream>> BuildUserAgentWasNotFound(MessageBase message)
+        {
+            var signaling = message.Signaling;
+            StringBuilder builder = new StringBuilder();
+
+            builder
+                .Append(SipVersionAndProtocol)
+                .Append(' ')
+                .Append(SipMessageMethod.NotFound.Value)
+                .Append(' ')
+                .Append(SipMessageMethod.NotFound.Name)
+                .Append(SyntaxHelper.Primitives.Crlf);
+
+            foreach (var proxy in signaling.Proxies)
+                builder.AppendVia(proxy);
+
+            // add from
+            builder
+                .AppendContact(message.Signaling.From, SipHeaderMethod.From);
+
+            // add to
+            builder
+                .AppendContact(message.Signaling.To, SipHeaderMethod.To);
+
+
+            // add content length
+            if (signaling.ContentLength is not null)
+                builder
+                    .Append(SipHeaderMethod.ContentLength.Key)
+                    .Append(": ")
+                    .Append(0)
+                    .Append(SyntaxHelper.Primitives.Crlf);
+
+            return Task.FromResult(
+                Result.Ok<Stream>(new MemoryStream(Encoding.UTF8.GetBytes(builder.ToString()))));
         }
     }
 }

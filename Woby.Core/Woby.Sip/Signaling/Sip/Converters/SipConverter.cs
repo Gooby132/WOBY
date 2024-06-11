@@ -14,6 +14,10 @@ using Woby.Sip.Signaling.Sip.Converters;
 using Woby.Sip.Signaling.Sip.Commons;
 using static Woby.Core.Utils.Rfc.SyntaxHelper;
 using Woby.Sip.Signaling.Sip.Constants;
+using Woby.Core.Abstractions;
+using System.Data;
+using Woby.Core.Signaling.Sip.Parsers.Utils;
+using Microsoft.Net.Http.Headers;
 
 namespace Woby.Core.Signaling.Sip.Converters
 {
@@ -29,10 +33,11 @@ namespace Woby.Core.Signaling.Sip.Converters
     /// These rules for parsing a display name, URI and URI parameters, and header parameters also apply for the header fields To and From.
     /// 
     /// </summary>
-    public class SipConverter
+    public class SipConverter : ISignalingConverter<SipMessage>
     {
 
         public static readonly char[] Whitespaces = [' ', '\t', '\n', '\r'];
+        public static readonly string[] ProtocolSchemes = ["sip:", "sips:"];
         private readonly ILogger<SipConverter> _logger;
 
         public SipConverter(ILogger<SipConverter> logger)
@@ -192,16 +197,16 @@ namespace Woby.Core.Signaling.Sip.Converters
             string topmostViaBranchValue,
             Route topmostViaHeader)
         {
-            return new DialogId(string.Empty, $"{messageMethod.Name};{topmostViaBranchValue};{topmostViaHeader.Uri};{routeFromHeader.Uri}");
+            return new DialogId(string.Empty, $"{messageMethod.Name};{topmostViaBranchValue};{topmostViaHeader};{routeFromHeader}");
         }
 
         public Result<SignalingHeader> ConvertHeader(SipHeader sipHeader)
         {
             SignalingHeader? temp = null;
-            var type = SipHeaderMethods.GetType(sipHeader.Key);
+            var type = SipHeaderMethod.GetType(sipHeader.Key);
 
             type
-                .When([SipHeaderMethods.From, SipHeaderMethods.To, SipHeaderMethods.Contact])
+                .When([SipHeaderMethod.From, SipHeaderMethod.To, SipHeaderMethod.Contact])
                 .Then(() =>
                 {
                     // Address Specification ; https://datatracker.ietf.org/doc/html/rfc2822#section-3.4
@@ -213,40 +218,55 @@ namespace Woby.Core.Signaling.Sip.Converters
                     }
 
                     RouteRole role = RouteRole.NotSet;
+
                     type
-                        .When(SipHeaderMethods.From)
+                        .When(SipHeaderMethod.From)
                         .Then(() => role = RouteRole.Sender)
-                        .When(SipHeaderMethods.To)
+                        .When(SipHeaderMethod.To)
                         .Then(() => role = RouteRole.Recipient);
 
-                    if (Uri.TryCreate(address, UriKind.RelativeOrAbsolute, out var uri))
+
+                    Dictionary<string, string>? d = null;
+
+                    if (sipHeader.HasParamerters())
                     {
-                        Dictionary<string, string>? d = null;
+                        d = new Dictionary<string, string>();
 
-                        if (sipHeader.HasParamerters())
-                        {
-                            d = new Dictionary<string, string>();
-
-                            foreach (var p in sipHeader.Parameters)
-                                d.Add(p.Name, p.Value);
-                        }
-
-                        temp = new Route(
-                            uri,
-                            role,
-                            sipHeader.Key,
-                            sipHeader.Body,
-                            displayName: displayName,
-                            additinalMetadata: d?.ToImmutableDictionary());
+                        foreach (var p in sipHeader.Parameters)
+                            d.Add(p.Name, p.Value);
                     }
+
+                    if (!HeaderFieldsUtils.TryParseContactUri(
+                        address,
+                        out var scheme,
+                        out var user,
+                        out var password,
+                        out var host,
+                        out var port,
+                        out var parameters,
+                        out var headers)) return;
+
+                    temp = new Route(
+                        role,
+                        sipHeader.Key,
+                        sipHeader.Body,
+                        displayName,
+                        scheme,
+                        user,
+                        password,
+                        host,
+                        port,
+                        NetworkProtocol.Unknown,
+                        additinalMetadata: d?.ToImmutableDictionary());
+
                 })
-                .When([SipHeaderMethods.CallId])
+                .When([SipHeaderMethod.CallId])
                 .Then(() =>
                 {
                     // no parsing required
                     temp = new NegotiationId(sipHeader.Key, sipHeader.Body);
                 })
-                .When([SipHeaderMethods.CSeq])
+                .When([SipHeaderMethod.CSeq])
                 .Then(() =>
                 {
                     string[] sections = sipHeader.Body.Split(Whitespaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -262,7 +282,7 @@ namespace Woby.Core.Signaling.Sip.Converters
 
                     temp = new SequenceHeader(sipHeader.Key, sequence, sections[1], sipHeader.Body);
                 })
-                .When([SipHeaderMethods.MaxForwards])
+                .When([SipHeaderMethod.MaxForwards])
                 .Then(() =>
                 {
                     string[] sections = sipHeader.Body.Split(Whitespaces, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -279,44 +299,18 @@ namespace Woby.Core.Signaling.Sip.Converters
                     // no parsing required
                     temp = new MaxForwardings(sipHeader.Key, maxForwarding, sipHeader.Body);
                 })
-                .When([SipHeaderMethods.Via])
+                .When([SipHeaderMethod.Via])
                 .Then(() =>
                 {
-                    int index;
-                    string? protocolSection = null;
-                    string? addressSection = null;
 
-                    if ((index = sipHeader.Body.IndexOf(NetworkProtocol.Udp.Name)) != -1)
-                    {
-                        protocolSection = sipHeader.Body.Substring(0, index + NetworkProtocol.Udp.CharacterLength);
-                        addressSection = sipHeader.Body.Substring(index + NetworkProtocol.Udp.CharacterLength).Trim();
-                    }
-
-                    if (index == -1 && (index = sipHeader.Body.IndexOf(NetworkProtocol.Tcp.Name)) != -1)
-                    {
-                        protocolSection = sipHeader.Body.Substring(0, index + NetworkProtocol.Tcp.CharacterLength);
-                        addressSection = sipHeader.Body.Substring(index + NetworkProtocol.Tcp.CharacterLength).Trim();
-                    }
-
-                    if (index == -1 && (index = sipHeader.Body.IndexOf(NetworkProtocol.Tls.Name)) != -1)
-                    {
-                        protocolSection = sipHeader.Body.Substring(0, index + NetworkProtocol.Tls.CharacterLength);
-                        addressSection = sipHeader.Body.Substring(index + NetworkProtocol.Tls.CharacterLength).Trim();
-                    }
-
-                    if (index == -1 && (index = sipHeader.Body.IndexOf(NetworkProtocol.Sctp.Name)) != -1)
-                    {
-                        protocolSection = sipHeader.Body.Substring(0, index + NetworkProtocol.Sctp.CharacterLength);
-                        addressSection = sipHeader.Body.Substring(index + NetworkProtocol.Sctp.CharacterLength).Trim();
-                    }
-
-                    if (index <= 0)
-                    {
-                        _logger.LogWarning("{this} 'Via' received does not follow the correct format: <protocol> <uri>", this);
-                        return;
-                    }
-
-                    if (string.IsNullOrEmpty(addressSection))
+                    if (!HeaderFieldsUtils.TryParseViaUri(
+                        sipHeader.Body,
+                        out var host,
+                        out var port,
+                        out var protocol,
+                        out var networkProtocol,
+                        out var parameters
+                        ))
                     {
                         _logger.LogWarning("{this} 'Via' received does not follow the correct format: <protocol> <uri>", this);
                         return;
@@ -324,36 +318,38 @@ namespace Woby.Core.Signaling.Sip.Converters
 
                     // uri as 172.0.0.0: 5060 - is valid by book (TODO: add support)
 
-                    if (Uri.TryCreate(addressSection, UriKind.RelativeOrAbsolute, out var uri))
+                    Dictionary<string, string>? d = null;
+
+                    if (sipHeader.HasParamerters())
                     {
-                        Dictionary<string, string>? d = null;
+                        d = new Dictionary<string, string>();
 
-                        if (sipHeader.HasParamerters())
-                        {
-                            d = new Dictionary<string, string>();
-
-                            foreach (var p in sipHeader.Parameters)
-                                d.Add(p.Name, p.Value);
-                        }
-
-                        temp = new Route(
-                            uri,
-                            RouteRole.Proxy,
-                            sipHeader.Key,
-                            sipHeader.Body,
-                            protocol: protocolSection,
-                            additinalMetadata: d?.ToImmutableDictionary());
+                        foreach (var p in sipHeader.Parameters)
+                            d.Add(p.Name, p.Value);
                     }
 
+                    temp = new Route(
+                        RouteRole.Proxy,
+                        sipHeader.Key,
+                        sipHeader.Body,
+                        null,
+                        protocol,
+                        null,
+                        null,
+                        host,
+                        port,
+                        networkProtocol,
+                        additinalMetadata: d?.ToImmutableDictionary());
+
                 })
-                .When([SipHeaderMethods.ContentType])
+                .When([SipHeaderMethod.ContentType])
                 .Then(() =>
                 {
                     System.Net.Mime.ContentType contentType = new System.Net.Mime.ContentType(sipHeader.Body);
 
                     temp = new ContentType(sipHeader.Key, sipHeader.Body, contentType);
                 })
-                .When([SipHeaderMethods.ContentLength])
+                .When([SipHeaderMethod.ContentLength])
                 .Then(() =>
                 {
                     if (!uint.TryParse(sipHeader.Body, out var length))

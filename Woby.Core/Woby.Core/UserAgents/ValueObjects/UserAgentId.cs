@@ -9,7 +9,7 @@ namespace Woby.Core.Signaling.UserAgents.ValueObjects
     public class UserAgentId
     {
         public required string Id { get; init; }
-        public required string? Tag { get; init; }
+        public string? Tag { get; init; }
 
         public UserAgentId()
         {
@@ -17,7 +17,7 @@ namespace Woby.Core.Signaling.UserAgents.ValueObjects
 
         public static UserAgentId CreateUserAgentIdFromRoute(Route route) => new UserAgentId
         {
-            Id = route.Uri.GetLeftPart(UriPartial.Path),
+            Id = route.User,
             Tag = route.Tag
         };
     }

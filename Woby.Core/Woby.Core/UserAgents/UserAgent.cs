@@ -10,8 +10,12 @@ using Woby.Core.Signaling.Primitives;
 using Woby.Core.Signaling.UserAgents.DomainEvents;
 using Woby.Core.Signaling.Errors;
 
-namespace Woby.Core.Signaling.UserAgents
+namespace Woby.Core.UserAgents
 {
+
+    /// <summary>
+    /// User Agent is the way for handling request as per user
+    /// </summary>
     public abstract class UserAgent : AggregateRoot<UserAgentId>
     {
 
@@ -29,7 +33,7 @@ namespace Woby.Core.Signaling.UserAgents
                     Id = request.Signaling.DialogId,
                     Callee = Id,
                     Caller = UserAgentId.CreateUserAgentIdFromRoute(request.Signaling.From),
-                    Messages = (new List<MessageBase>() { request }).ToImmutableList(),
+                    Messages = new List<MessageBase>() { request }.ToImmutableList(),
                 };
 
             var notifyIncomingCallResult = NotifyIncomingCall(request.Signaling.From);
@@ -37,8 +41,8 @@ namespace Woby.Core.Signaling.UserAgents
             MessageBase response;
             switch (notifyIncomingCallResult)
             {
-                case DialogUpdateRequestOptions.Ignore:
-                    dialog.AppendMessage((response = new MessageBase
+                case NotifyIncomingCallOptions.Ignored:
+                    dialog.AppendMessage(response = new MessageBase
                     {
                         Signaling = new SignalingSection
                         {
@@ -51,11 +55,11 @@ namespace Woby.Core.Signaling.UserAgents
                             Sequence = request.Signaling.Sequence.Increment(),
                         },
                         Content = null
-                    }));
+                    });
 
                     break;
-                case DialogUpdateRequestOptions.Notified:
-                    dialog.AppendMessage((response = new MessageBase
+                case NotifyIncomingCallOptions.Notified:
+                    dialog.AppendMessage(response = new MessageBase
                     {
                         Signaling = new SignalingSection
                         {
@@ -68,11 +72,11 @@ namespace Woby.Core.Signaling.UserAgents
                             Sequence = request.Signaling.Sequence.Increment(),
                         },
                         Content = null
-                    }));
+                    });
 
                     break;
                 default:
-                    dialog.AppendMessage((response = new MessageBase
+                    dialog.AppendMessage(response = new MessageBase
                     {
                         Signaling = new SignalingSection
                         {
@@ -85,7 +89,7 @@ namespace Woby.Core.Signaling.UserAgents
                             Sequence = request.Signaling.Sequence.Increment(),
                         },
                         Content = null
-                    }));
+                    });
 
                     break;
             }
@@ -110,7 +114,7 @@ namespace Woby.Core.Signaling.UserAgents
                     Id = request.Signaling.DialogId,
                     Callee = Id,
                     Caller = UserAgentId.CreateUserAgentIdFromRoute(request.Signaling.From),
-                    Messages = (new List<MessageBase>() { request }).ToImmutableList(),
+                    Messages = new List<MessageBase>() { request }.ToImmutableList(),
                 };
 
             var incomingCallResult = IncomingCall(request);
@@ -119,7 +123,7 @@ namespace Woby.Core.Signaling.UserAgents
             switch (incomingCallResult)
             {
                 case DialogCreationOptions.Decline:
-                    dialog.AppendMessage((response = new MessageBase
+                    dialog.AppendMessage(response = new MessageBase
                     {
                         Signaling = new SignalingSection
                         {
@@ -132,10 +136,10 @@ namespace Woby.Core.Signaling.UserAgents
                             Sequence = request.Signaling.Sequence.Increment(),
                         },
                         Content = null
-                    }));
+                    });
                     break;
                 case DialogCreationOptions.Answer:
-                    dialog.AppendMessage((response = new MessageBase
+                    dialog.AppendMessage(response = new MessageBase
                     {
                         Signaling = new SignalingSection
                         {
@@ -148,10 +152,10 @@ namespace Woby.Core.Signaling.UserAgents
                             Sequence = request.Signaling.Sequence.Increment(),
                         },
                         Content = null
-                    }));
+                    });
                     break;
                 default:
-                    dialog.AppendMessage((response = MessageBase.NoMessage(
+                    dialog.AppendMessage(response = MessageBase.NoMessage(
                         new SignalingSection
                         {
                             DialogId = dialog.Id,
@@ -162,7 +166,7 @@ namespace Woby.Core.Signaling.UserAgents
                             Role = RoleType.DialogCreationRequestIgnored,
                             Sequence = request.Signaling.Sequence.Increment(),
                         }
-                    )));
+                    ));
                     break;
             }
 
@@ -187,8 +191,6 @@ namespace Woby.Core.Signaling.UserAgents
         {
             var dialog = GetDialog(request.Signaling.DialogId);
 
-
-
             return Result.Fail(new LoopDetectedError());
         }
 
@@ -196,7 +198,7 @@ namespace Woby.Core.Signaling.UserAgents
 
         public abstract DialogUpdateRequestOptions DialogUpdateRequest(Dialog previous, Dialog updated);
 
-        public abstract DialogUpdateRequestOptions NotifyIncomingCall(Route from);
+        public abstract NotifyIncomingCallOptions NotifyIncomingCall(Route from);
 
         public enum NotifyIncomingCallOptions
         {

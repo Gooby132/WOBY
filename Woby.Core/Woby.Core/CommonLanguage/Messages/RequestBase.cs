@@ -2,10 +2,6 @@
 {
     public class RequestBase : MessageBase
     {
-        public RequestBase(SignalingSection signaling, ContentSection? content = null) : base()
-        {
-            Signaling = signaling;
-            Content = content;
-        }
+        public RequestBase() : base() { }
     }
 }
