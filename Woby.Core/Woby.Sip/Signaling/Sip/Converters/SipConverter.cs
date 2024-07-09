@@ -17,7 +17,6 @@ using Woby.Sip.Signaling.Sip.Constants;
 using Woby.Core.Abstractions;
 using System.Data;
 using Woby.Core.Signaling.Sip.Parsers.Utils;
-using Microsoft.Net.Http.Headers;
 
 namespace Woby.Core.Signaling.Sip.Converters
 {
@@ -45,7 +44,7 @@ namespace Woby.Core.Signaling.Sip.Converters
             _logger = logger;
         }
 
-        public Result<SignalingSection> Convert(SipMessage sipMessage)
+        public Result<SignalingSection> Convert(SipMessage sipMessage, NetworkMetadata metadata)
         {
             RoleType? role = RoleTypeExtensions.FromSipMethod(sipMessage.RequestLineHeader.Method);
             List<SignalingHeader> coreHeaders = new List<SignalingHeader>();
@@ -55,13 +54,13 @@ namespace Woby.Core.Signaling.Sip.Converters
             MaxForwardings? maxForwardings = null;
             Route? to = null;
             Route? from = null;
-            List<Route> proxies = new List<Route>();
+            List<Proxy> proxies = new List<Proxy>();
             ContentType? contentType = null;
             ContentLength? contentLength = null;
 
             foreach (var header in sipMessage.Headers)
             {
-                var coreHeader = ConvertHeader(header);
+                var coreHeader = ConvertHeader(header, metadata);
 
                 if (coreHeader.IsFailed)
                 {
@@ -91,7 +90,7 @@ namespace Woby.Core.Signaling.Sip.Converters
                     from = fromRoute.Role == RouteRole.Sender ? fromRoute : null;
                 }
 
-                if (coreHeader.Value is Route proxyRoute && proxyRoute.Role == RouteRole.Proxy)
+                if (coreHeader.Value is Proxy proxyRoute)
                 {
                     proxies.Add(proxyRoute);
                     continue;
@@ -148,7 +147,7 @@ namespace Woby.Core.Signaling.Sip.Converters
             if (role is null)
                 return Result.Fail(SipCoreErrors.MissingRequestLine());
 
-            Route? topmostViaHeader;
+            Proxy? topmostViaHeader;
             if ((topmostViaHeader = proxies.LastOrDefault()) is null)
                 return Result.Fail(SipCoreErrors.MissingVia());
 
@@ -195,12 +194,12 @@ namespace Woby.Core.Signaling.Sip.Converters
             SipMessageMethod messageMethod,
             Route routeFromHeader,
             string topmostViaBranchValue,
-            Route topmostViaHeader)
+            Proxy topmostViaHeader)
         {
             return new DialogId(string.Empty, $"{messageMethod.Name};{topmostViaBranchValue};{topmostViaHeader};{routeFromHeader}");
         }
 
-        public Result<SignalingHeader> ConvertHeader(SipHeader sipHeader)
+        public Result<SignalingHeader> ConvertHeader(SipHeader sipHeader, NetworkMetadata metadata)
         {
             SignalingHeader? temp = null;
             var type = SipHeaderMethod.GetType(sipHeader.Key);
@@ -302,14 +301,12 @@ namespace Woby.Core.Signaling.Sip.Converters
                 .When([SipHeaderMethod.Via])
                 .Then(() =>
                 {
-
                     if (!HeaderFieldsUtils.TryParseViaUri(
                         sipHeader.Body,
                         out var host,
                         out var port,
                         out var protocol,
-                        out var networkProtocol,
-                        out var parameters
+                        out var networkProtocol
                         ))
                     {
                         _logger.LogWarning("{this} 'Via' received does not follow the correct format: <protocol> <uri>", this);
@@ -328,18 +325,17 @@ namespace Woby.Core.Signaling.Sip.Converters
                             d.Add(p.Name, p.Value);
                     }
 
-                    temp = new Route(
-                        RouteRole.Proxy,
+                    temp = new Proxy(
                         sipHeader.Key,
                         sipHeader.Body,
-                        null,
-                        protocol,
-                        null,
-                        null,
-                        host,
-                        port,
-                        networkProtocol,
-                        additinalMetadata: d?.ToImmutableDictionary());
+                        d?.ToImmutableDictionary())
+                    {
+                        Host = host,
+                        Port = port,
+                        Protocol = protocol,
+                        Metadata = metadata,
+                        DeclaredTransport = networkProtocol.Name.ToUpperInvariant()
+                    };
 
                 })
                 .When([SipHeaderMethod.ContentType])

@@ -72,10 +72,7 @@ namespace Woby.Core.Signaling.Sip.Builder
 
             // add call-id
             builder
-                .Append(SipHeaderMethod.CallId.Key)
-                .Append(": ")
-                .Append(signaling.NegitiationId.Id)
-                .Append(SyntaxHelper.Primitives.Crlf);
+                .AppendHeader(SipHeaderMethod.CallId.Key, signaling.NegitiationId.Id);
 
             // add sequence
             builder
@@ -106,6 +103,22 @@ namespace Woby.Core.Signaling.Sip.Builder
                Result.Ok<Stream>(new MemoryStream(Encoding.UTF8.GetBytes(builder.ToString()))));
         }
 
+        public Task<Result<Stream>> BuildResponse(ResponseBase message, SipMessageMethod method)
+        {
+            var signaling = message.Signaling;
+            StringBuilder builder = new StringBuilder();
+            builder
+                .Append(SipVersionAndProtocol)
+                .Append(' ')
+                .Append(method.Value)
+                .Append(' ')
+                .Append(method.Name)
+                .Append(SyntaxHelper.Primitives.Crlf);
+
+            return Task.FromResult(
+                Result.Ok<Stream>(new MemoryStream(Encoding.UTF8.GetBytes(builder.ToString()))));
+        }
+
         public Task<Result<Stream>> BuildUserAgentWasNotFound(MessageBase message)
         {
             var signaling = message.Signaling;
@@ -130,6 +143,115 @@ namespace Woby.Core.Signaling.Sip.Builder
             builder
                 .AppendContact(message.Signaling.To, SipHeaderMethod.To);
 
+            // add call-id
+            builder
+                .AppendHeader(SipHeaderMethod.CallId.Key, signaling.NegitiationId.Id);
+
+            // add sequence
+            builder
+                .Append(SipHeaderMethod.CSeq.Key)
+                .Append(": ")
+                .Append(signaling.Sequence.Sequence)
+                .Append(' ')
+                .Append(signaling.Sequence.Method)
+                .Append(SyntaxHelper.Primitives.Crlf);
+
+            // add content length
+            if (signaling.ContentLength is not null)
+                builder
+                    .Append(SipHeaderMethod.ContentLength.Key)
+                    .Append(": ")
+                    .Append(0)
+                    .Append(SyntaxHelper.Primitives.Crlf);
+
+            return Task.FromResult(
+                Result.Ok<Stream>(new MemoryStream(Encoding.UTF8.GetBytes(builder.ToString()))));
+        }
+
+        public Task<Result<Stream>> BuildTrying(MessageBase message)
+        {
+            var signaling = message.Signaling;
+            StringBuilder builder = new StringBuilder();
+
+            builder
+                .Append(SipVersionAndProtocol)
+                .Append(' ')
+                .Append(SipMessageMethod.Trying.Value)
+                .Append(' ')
+                .Append(SipMessageMethod.Trying.Name)
+                .Append(SyntaxHelper.Primitives.Crlf);
+
+            foreach (var proxy in signaling.Proxies)
+                builder.AppendVia(proxy);
+
+            // add from
+            builder
+                .AppendContact(message.Signaling.From, SipHeaderMethod.From);
+
+            // add to
+            builder
+                .AppendContact(message.Signaling.To, SipHeaderMethod.To);
+
+            // add call-id
+            builder
+                .AppendHeader(SipHeaderMethod.CallId.Key, signaling.NegitiationId.Id);
+
+            // add sequence
+            builder
+                .Append(SipHeaderMethod.CSeq.Key)
+                .Append(": ")
+                .Append(signaling.Sequence.Sequence)
+                .Append(' ')
+                .Append(signaling.Sequence.Method)
+                .Append(SyntaxHelper.Primitives.Crlf);
+
+            // add content length
+            builder
+                .Append(SipHeaderMethod.ContentLength.Key)
+                .Append(": ")
+                .Append(0)
+                .Append(SyntaxHelper.Primitives.Crlf);
+
+            return Task.FromResult(
+                Result.Ok<Stream>(new MemoryStream(Encoding.UTF8.GetBytes(builder.ToString()))));
+        }
+
+        public Task<Result<Stream>> BuildRinging(MessageBase message)
+        {
+            var signaling = message.Signaling;
+            StringBuilder builder = new StringBuilder();
+
+            builder
+                .Append(SipVersionAndProtocol)
+                .Append(' ')
+                .Append(SipMessageMethod.Ringing.Value)
+                .Append(' ')
+                .Append(SipMessageMethod.Ringing.Name)
+                .Append(SyntaxHelper.Primitives.Crlf);
+
+            foreach (var proxy in signaling.Proxies)
+                builder.AppendVia(proxy);
+
+            // add from
+            builder
+                .AppendContact(message.Signaling.From, SipHeaderMethod.From);
+
+            // add to
+            builder
+                .AppendContact(message.Signaling.To, SipHeaderMethod.To);
+
+            // add call-id
+            builder
+                .AppendHeader(SipHeaderMethod.CallId.Key, signaling.NegitiationId.Id);
+
+            // add sequence
+            builder
+                .Append(SipHeaderMethod.CSeq.Key)
+                .Append(": ")
+                .Append(signaling.Sequence.Sequence)
+                .Append(' ')
+                .Append(signaling.Sequence.Method)
+                .Append(SyntaxHelper.Primitives.Crlf);
 
             // add content length
             if (signaling.ContentLength is not null)

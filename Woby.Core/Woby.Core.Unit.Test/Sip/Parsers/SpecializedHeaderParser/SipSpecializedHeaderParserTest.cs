@@ -73,7 +73,7 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
                 ],
                 [
                     "To: \"Bob\" sip:bob@example.net;tag=54321",
-                    new SipHeader("To", "\"Bob\" sip:bob@example.net", HeaderType.Unknown, new List<SipParameter> { new SipParameter("tag", "54321") })                
+                    new SipHeader("To", "\"Bob\" sip:bob@example.net", HeaderType.Unknown, new List<SipParameter> { new SipParameter("tag", "54321") })
                 ],
                 [
                     "To: \"Bob\" sip:bob@example.net;tag=78901",
@@ -84,12 +84,18 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
         [TestMethod]
         [DynamicData(nameof(ValidFromData))]
         public void ParseSpecializedHeader_From_Successful(
-            string headerAsString, 
-            SipHeader expectedHeader, 
+            string headerAsString,
+            SipHeader expectedHeader,
             Route expectedRoute)
         {
             var header1 = _headerParser.ParseSingleHeader(headerAsString);
-            var route = _specializedParser.ConvertHeader(header1.Value);
+            var route = _specializedParser.ConvertHeader(
+                header1.Value,
+                new NetworkMetadata
+                {
+                    NetworkProtocol = NetworkProtocol.Unknown,
+                    ReceviedOn = new System.Net.IPEndPoint(0, 0),
+                });
 
             Assert.IsTrue(header1.IsSuccess);
             Assert.AreEqual(header1.Value, expectedHeader, "Header are not equal");
@@ -100,12 +106,18 @@ namespace Woby.Core.Unit.Test.Sip.Parsers.SpecializedHeaderParser
         [TestMethod]
         [DynamicData(nameof(ValidToData))]
         public void ParseSpecializedHeader_To_Successful(
-            string headerAsString, 
+            string headerAsString,
             SipHeader expectedHeader,
             Route expectedRoute)
         {
             var header1 = _headerParser.ParseSingleHeader(headerAsString);
-            var route = _specializedParser.ConvertHeader(header1.Value);
+            var route = _specializedParser.ConvertHeader(
+                header1.Value,
+                new NetworkMetadata
+                {
+                    NetworkProtocol = NetworkProtocol.Unknown,
+                    ReceviedOn = new System.Net.IPEndPoint(0, 0),
+                });
 
             Assert.IsTrue(header1.IsSuccess);
             Assert.AreEqual(header1.Value, expectedHeader, "Header are not equal");

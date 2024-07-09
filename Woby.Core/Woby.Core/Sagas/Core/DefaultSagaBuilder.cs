@@ -30,7 +30,7 @@ namespace Woby.Core.Sagas.Core
     /// </list>
     /// </summary>
     /// <typeparam name="InputMessage"></typeparam>
-    internal class DefaultSagaBuilder<InputMessage> : ISagaBuilder<InputMessage>
+    public class DefaultSagaBuilder<InputMessage> : ISagaBuilder<InputMessage>
     {
 
         private readonly IServiceProvider _provider;

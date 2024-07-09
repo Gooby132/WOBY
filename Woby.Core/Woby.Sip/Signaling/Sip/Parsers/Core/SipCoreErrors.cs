@@ -14,7 +14,7 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
         public static MissingError MissingCallId() => new MissingError("Call-ID", GroupCode, 6, "Message received has missing 'Call-ID'");
         public static MissingError MissingCSeq() => new MissingError("CSeq", GroupCode, 7, "Message received has missing 'CSeq'");
         public static MissingError MissingContentType() => new MissingError("ContentType", GroupCode, 8, "Message received has missing 'Content-Type'");
-        public static MissingError MissingContentLength() => new MissingError("ContenLength", GroupCode, 9, "Message received has missing 'Conten-Length'");
+        public static MissingError MissingContentLength() => new MissingError("ContenLength", GroupCode, 9, "Message received has missing 'Content-Length'");
         public static MissingError MissingRequestLine() => new MissingError("Request-Line", GroupCode, 10, "Message received has missing 'Request Line'");
 
         public static InvalidError CSeqSequenceIsTooLarge() => new InvalidError(GroupCode, 8, "'CSeq' sequence exceeds the limit");

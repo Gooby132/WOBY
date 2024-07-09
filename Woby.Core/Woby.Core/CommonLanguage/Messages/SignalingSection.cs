@@ -14,7 +14,7 @@ namespace Woby.Core.CommonLanguage.Messages
         public required SequenceHeader Sequence { get; init; }
         public required Route To { get; init; }
         public required Route From { get; init; }
-        public required IImmutableList<Route> Proxies { get; init; }
+        public required IImmutableList<Proxy> Proxies { get; init; }
         public MaxForwardings? MaxForwardings { get; init; } // TODO: should be added to docs
         public ContentType? ContentType { get; init; }
         public ContentLength? ContentLength { get; init; }

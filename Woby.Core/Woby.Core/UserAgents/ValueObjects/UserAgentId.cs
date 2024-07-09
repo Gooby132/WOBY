@@ -1,4 +1,6 @@
-﻿using Woby.Core.CommonLanguage.Signaling.Routings;
+﻿using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using System.Xml.Linq;
+using Woby.Core.CommonLanguage.Signaling.Routings;
 
 namespace Woby.Core.Signaling.UserAgents.ValueObjects
 {
@@ -6,7 +8,7 @@ namespace Woby.Core.Signaling.UserAgents.ValueObjects
     /// Represents a user agent by the following SIP URI scheme not including right side domain
     /// see - https://datatracker.ietf.org/doc/html/rfc3261#section-8.1.1.2
     /// </summary>
-    public class UserAgentId
+    public class UserAgentId 
     {
         public required string Id { get; init; }
         public string? Tag { get; init; }
@@ -20,5 +22,19 @@ namespace Woby.Core.Signaling.UserAgents.ValueObjects
             Id = route.User,
             Tag = route.Tag
         };
+
+        public override int GetHashCode() => Id.GetHashCode();
+
+        public override bool Equals(object obj)
+        {
+            UserAgentId? other = obj as UserAgentId;
+            if (other == null || GetType() != obj.GetType())
+            {
+                return false;
+            }
+
+            return Id == other.Id;
+        }
+
     }
 }

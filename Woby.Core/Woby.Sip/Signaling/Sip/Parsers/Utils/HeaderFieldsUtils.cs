@@ -21,7 +21,7 @@ namespace Woby.Core.Signaling.Sip.Parsers.Utils
                 @"^SIP/2\.0/(?<transport>\w+)\s+(?<host>[^:;]+)(:(?<port>\d+))?(;(?<params>.*))?$",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public static readonly string SipProtocol = "SIP/2";
+        public static readonly string SipProtocol = "SIP/2.0";
         public static readonly int ParameterNameIndex = 0;
         public static readonly int ParameterValueIndex = 1;
         public static readonly char ParameterSeperator = ';';
@@ -189,14 +189,12 @@ namespace Woby.Core.Signaling.Sip.Parsers.Utils
             [NotNullWhen(true)] out string? host,
             out int? port,
             [NotNullWhen(true)] out string? protocol,
-            out NetworkProtocol networkProtocol,
-            out IEnumerable<SipParameter>? parameters)
+            out NetworkProtocol networkProtocol)
         {
             host = null;
             port = null;
             protocol= null;
             networkProtocol = NetworkProtocol.Unknown;
-            parameters = null;
             
             var match = SipViaUriPattern.Match(header);
 
@@ -207,9 +205,6 @@ namespace Woby.Core.Signaling.Sip.Parsers.Utils
             protocol = SipProtocol;
             string transport = match.Groups["transport"].Value;
             string portAsString = match.Groups["port"].Value;
-            string parametersAsString = match.Groups["parameters"].Value;
-
-            parameters = null; // TODO: add parameters support
 
             if (string.IsNullOrEmpty(host))
                 return false;

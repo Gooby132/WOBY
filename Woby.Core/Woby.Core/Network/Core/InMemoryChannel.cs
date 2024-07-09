@@ -27,6 +27,7 @@ namespace Woby.Core.Network.Core
         }
 
         public required string Message { get; init; }
+        public required NetworkMetadata NetworkMetadata { get; init; }
 
         public List<string> MessagesSent { get; init; } = new();
 
@@ -42,7 +43,10 @@ namespace Woby.Core.Network.Core
             _logger.LogTrace("{this} new channel listener request to subscribe. transmiting message.", 
                 this);
 
-            listener.ReceiveMessage(new MemoryStream(Encoding.UTF8.GetBytes(Message))).Wait(5_000);
+            listener.ReceiveMessage(
+                new MemoryStream(Encoding.UTF8.GetBytes(Message)), 
+                NetworkMetadata
+                ).Wait(5_000);
 
             return Result.Ok();
         }

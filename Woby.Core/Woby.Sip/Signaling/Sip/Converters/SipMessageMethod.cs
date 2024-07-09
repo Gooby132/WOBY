@@ -10,6 +10,8 @@ namespace Woby.Sip.Signaling.Sip.Converters
         public static readonly SipMessageMethod Bye = new SipMessageMethod("BYE", 2);
         public static readonly SipMessageMethod Ok = new SipMessageMethod("OK", 3);
         public static readonly SipMessageMethod NotFound = new SipMessageMethod("Not Found", 404);
+        public static readonly SipMessageMethod Trying = new SipMessageMethod("Trying", 100);
+        public static readonly SipMessageMethod Ringing = new SipMessageMethod("Ringing", 180);
 
         private SipMessageMethod(string name, int value) : base(name, value)
         {

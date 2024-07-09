@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Woby.Core.Network.Core;
 using Woby.Core.Signaling.Sip.Builder;
 using Woby.Core.Signaling.Sip.Converters;
 using Woby.Core.Signaling.Sip.Parsers.Core;
@@ -51,7 +52,12 @@ namespace Woby.Core.Integration.Test.Signaling.Sip.ParserBuilder
 
             var common = converter.Convert(
                 parsedMessage
-                    .Value);
+                    .Value,
+                    new NetworkMetadata
+                    {
+                        NetworkProtocol = NetworkProtocol.Unknown,
+                        ReceviedOn = new System.Net.IPEndPoint(0, 0),
+                    });
 
             Assert.IsTrue(common.IsSuccess, "common language compilation failed");
 

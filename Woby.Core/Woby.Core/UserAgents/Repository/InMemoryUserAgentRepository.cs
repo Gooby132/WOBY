@@ -9,7 +9,7 @@ namespace Woby.Core.Signaling.UserAgents.Repository
     internal class InMemoryUserAgentRepository : IUserAgentsRepository
     {
 
-        private readonly IDictionary<UserAgentId, UserAgent> _userAgents = new Dictionary<UserAgentId, UserAgent>();
+        private static readonly IDictionary<UserAgentId, UserAgent> _userAgents = new Dictionary<UserAgentId, UserAgent>();
 
         public Result<UserAgent> GetUserAgent(UserAgentId id)
         {
@@ -21,12 +21,7 @@ namespace Woby.Core.Signaling.UserAgents.Repository
 
         public Result PersistUserAgent(UserAgent userAgent)
         {
-            if(!_userAgents.TryGetValue(userAgent.Id, out _))
-            {
-                return new NotFoundErrorBase(3, 1, "user agent was not found");
-            }
-
-            _userAgents[userAgent.Id] = userAgent;
+            _userAgents.TryAdd(userAgent.Id, userAgent);
 
             return Result.Ok();
         }

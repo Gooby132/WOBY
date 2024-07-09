@@ -7,11 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Woby.Core", "Woby.Core\Woby
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Woby.Core.Unit.Test", "Woby.Core.Unit.Test\Woby.Core.Unit.Test.csproj", "{D85D0809-E9BE-44F4-ABA0-810472F70133}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Woby.Core.Integration.Test", "Woby.Core.Integration.Test\Woby.Core.Integration.Test.csproj", "{20C5FDC7-3AE1-4D94-A0E6-7ED5FA523132}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Woby.Sip.Integration.Test", "Woby.Sip.Integration.Test\Woby.Sip.Integration.Test.csproj", "{20C5FDC7-3AE1-4D94-A0E6-7ED5FA523132}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Woby.Sip", "Woby.Sip\Woby.Sip.csproj", "{6FDB49AA-89AB-41D2-9056-C4F5B63147EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Woby.Sip.Unit.Test", "Woby.Sip.Unit.Test\Woby.Sip.Unit.Test.csproj", "{9432214C-31C5-4899-9DD6-86B388819531}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Woby.Sip.Unit.Test", "Woby.Sip.Unit.Test\Woby.Sip.Unit.Test.csproj", "{9432214C-31C5-4899-9DD6-86B388819531}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

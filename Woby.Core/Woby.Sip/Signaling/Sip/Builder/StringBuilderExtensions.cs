@@ -11,7 +11,6 @@ namespace Woby.Core.Signaling.Sip.Builder
 
         public static StringBuilder AppendUri(this StringBuilder builder, Route route)
         {
-
             if (route.HasUser())
                 builder
                     .Append(':')
@@ -36,16 +35,17 @@ namespace Woby.Core.Signaling.Sip.Builder
             return builder;
         }
 
-        public static StringBuilder AppendMetadata(this StringBuilder builder, IImmutableDictionary<string, string> additinalMetadata)
+        public static StringBuilder AppendHeaderParameter(this StringBuilder builder, string key, string value) => 
+            builder
+                .Append(SyntaxHelper.Primitives.SipHeaderDelimiter)
+                .Append(key)
+                .Append('=')
+                .Append(value);
+
+        public static StringBuilder AppendHeaderParameters(this StringBuilder builder, IImmutableDictionary<string, string> additinalMetadata)
         {
             foreach (var keyPair in additinalMetadata)
-            {
-                builder
-                    .Append(SyntaxHelper.Primitives.SipHeaderDelimiter)
-                    .Append(keyPair.Key)
-                    .Append('=')
-                    .Append(keyPair.Value);
-            }
+                builder.AppendHeaderParameter(keyPair.Key, keyPair.Value);
 
             return builder;
         }
@@ -91,19 +91,40 @@ namespace Woby.Core.Signaling.Sip.Builder
             return builder;
         }
 
-        public static StringBuilder AppendVia(this StringBuilder builder, Route route)
+        public static StringBuilder AppendHeader(this StringBuilder builder, string key, string value) =>
+            builder
+                .Append(key)
+                .Append(": ")
+                .Append(value)
+                .Append(SyntaxHelper.Primitives.Crlf);
+
+        public static StringBuilder AppendVia(this StringBuilder builder, Proxy proxy)
         {
             builder
                 .Append(SipHeaderMethod.Via.Key)
                 .Append(": ")
-                .Append(route.Protocol)
+                .Append(proxy.Protocol)
                 .Append('/')
-                .Append(route.NetworkProtocol.Name)
+                .Append(proxy.DeclaredTransport)
                 .Append(' ')
-                .AppendUri(route);
+                .Append(proxy.Host);
 
-            if (route.HasAdditinalMetadata())
-                builder.AppendMetadata(route.AdditinalMetadata);
+            if (proxy.Port.HasValue)
+                builder
+                    .Append(":")
+                    .Append(proxy.Port);
+
+            if (proxy.HasAdditinalMetadata())
+                builder
+                    .AppendHeaderParameters(proxy.AdditinalMetadata);
+
+            if (proxy.HasNetworkMetadata())
+                builder
+                    .AppendHeaderParameter(
+                        "received", 
+                        proxy.Metadata.ReceviedOn.Port > 0 ?
+                            proxy.Metadata.ReceviedOn.ToString() :
+                            proxy.Metadata.ReceviedOn.Address.ToString());
 
             return builder.Append(SyntaxHelper.Primitives.Crlf);
         }
@@ -116,7 +137,7 @@ namespace Woby.Core.Signaling.Sip.Builder
                 .AppendNameAddr(route);
 
             if (route.HasAdditinalMetadata())
-                builder.AppendMetadata(route.AdditinalMetadata);
+                builder.AppendHeaderParameters(route.AdditinalMetadata);
 
             return builder
                 .Append(SyntaxHelper.Primitives.Crlf);

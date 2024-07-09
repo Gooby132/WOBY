@@ -45,7 +45,7 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
 
         #endregion
 
-        public Result<MessageBase> Parse(string message, NetworkProtocol protocol)
+        public Result<MessageBase> Parse(string message, NetworkMetadata metadata)
         {
 
             // it is importent to consider folding stracture headers
@@ -70,7 +70,8 @@ namespace Woby.Core.Signaling.Sip.Parsers.Core
             }
 
             var section = _sipConverter.Convert(
-                sipHeaders.Value);
+                sipHeaders.Value,
+                metadata);
 
             if (section.IsFailed)
             {

@@ -17,11 +17,6 @@ namespace Woby.Core.CommonLanguage.Signaling.Routings
         /// </summary>
         public static readonly RouteRole Recipient = new RouteRole("recipient", 2);
 
-        /// <summary>
-        /// Proxy of the message. e.g 'Via' in SIP protocol
-        /// </summary>
-        public static readonly RouteRole Proxy = new RouteRole("proxy", 3);
-
         public static readonly RouteRole Monitoring = new RouteRole("recipient", 4);
 
         private RouteRole(string name, int value) : base(name, value)

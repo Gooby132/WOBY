@@ -41,6 +41,15 @@ namespace Woby.Core.Sagas.Clients
             UserAgentId userAgentId;
             Result<UserAgent>? userAgent;
 
+            var trying = await SendMessage(MessageBase.Trying(request.Signaling));
+
+            if(trying.IsFailed)
+            {
+                _logger.LogWarning("{this} sent trying to message. failed - '{errors}'", 
+                    this, 
+                    trying.Reasons.Select(r => r.Message));
+            }
+
             userAgentId = UserAgentId.CreateUserAgentIdFromRoute(request.Signaling.To); // TODO: should support multiples
             userAgent = _userAgentRepository.GetUserAgent(UserAgentId.CreateUserAgentIdFromRoute(request.Signaling.To));
 
@@ -70,6 +79,8 @@ namespace Woby.Core.Sagas.Clients
 
                     return await SendMessage(MessageBase.EndOfTransaction());
                 }
+
+                await SendMessage(MessageBase.Ringing(request.Signaling));
 
                 var incomingResult = userAgent.Value.HandleIncomingCallRequest(request);
 

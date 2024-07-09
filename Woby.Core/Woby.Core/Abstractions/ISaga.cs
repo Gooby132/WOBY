@@ -1,9 +1,8 @@
 ﻿using FluentResults;
 
-namespace Woby.Core.Abstractions
+namespace Woby.Core.Abstractions;
+
+public interface ISaga<InputMessage> : IChannelListener
 {
-    public interface ISaga<InputMessage> : IChannelListener
-    {
-        public Result Start();
-    }
+    public Result Start();
 }

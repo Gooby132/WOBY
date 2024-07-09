@@ -10,6 +10,11 @@ namespace Woby.Core.UserAgents.Test
         public required IEnumerator<DialogCreationOptions> DialogCreation { get; init; }
         public required IEnumerator<NotifyIncomingCallOptions> NotifyIncomingCallCommands { get; init; }
 
+        public UserAgentTest()
+        {
+            Dialogs = new List<Dialog>();
+        }
+
         public override DialogUpdateRequestOptions DialogUpdateRequest(Dialog previous, Dialog updated)
         {
             var temp = UpdateRequest.Current;
@@ -26,8 +31,8 @@ namespace Woby.Core.UserAgents.Test
 
         public override NotifyIncomingCallOptions NotifyIncomingCall(Route from)
         {
-            var temp = NotifyIncomingCallCommands.Current;
             NotifyIncomingCallCommands.MoveNext();
+            var temp = NotifyIncomingCallCommands.Current;
             return temp;
         }
     }
